@@ -30,7 +30,7 @@ const [{ data: households = [] }, { data: everyone = [] }] = await Promise.all([
 const membersOf = (householdId: string) => (everyone ?? []).filter((p) => p.household_id === householdId);
 const canLogIn = (everyone ?? []).filter((p) => p.email).length;
 
-const field = 'mt-1 block min-h-12 w-full rounded-md border border-ink-soft bg-paper px-3';
+const field = 'mt-1 block min-h-tap w-full rounded-md border border-ink-soft bg-paper px-3';
 const label = 'block font-bold';
 const ROWS = 6;
 
@@ -50,8 +50,8 @@ const describe = (p: Member) =>
     {failure && <p class="note border-clay font-bold">{failure}</p>}
   </div>
 
-  <section aria-labelledby="add-heading" class="mt-10 max-w-[38rem]">
-    <h2 id="add-heading" class="text-[2rem]">Add a household</h2>
+  <section aria-labelledby="add-heading" class="mt-block max-w-measure">
+    <h2 id="add-heading" class="text-heading">Add a household</h2>
     <p class="mt-2 text-ink-soft">
       A household is a couple, a family or a single guest who reply together. People with an email address can log
       in. Children without email can be signed up by their parents.
@@ -89,8 +89,8 @@ const describe = (p: Member) =>
     </form>
   </section>
 
-  <section aria-labelledby="list-heading" class="mt-14">
-    <h2 id="list-heading" class="text-[2rem]">Everyone invited</h2>
+  <section aria-labelledby="list-heading" class="mt-section">
+    <h2 id="list-heading" class="text-heading">Everyone invited</h2>
     {(households?.length ?? 0) === 0 && <p class="mt-3">Nobody yet. Add the first household above.</p>}
     <ul class="ruled mt-4 border-y border-thread">
       {
@@ -99,17 +99,17 @@ const describe = (p: Member) =>
           const hasOrganiser = members.some((m) => m.role === 'admin');
           return (
             <li class="py-6">
-              <h3 class="text-[1.35rem]">{household.label}</h3>
+              <h3 class="text-subheading">{household.label}</h3>
               <ul class="mt-3 space-y-3">
                 {members.map((person) => (
-                  <li class="max-w-[38rem]">
+                  <li class="max-w-measure">
                     <p>
                       <span class="font-bold">{person.full_name}</span>
                       <span class="text-ink-soft"> ({describe(person)})</span>
                     </p>
                     <p class="text-ink-soft">{person.email ?? 'No email, cannot log in'}</p>
                     <details class="mt-1">
-                      <summary class="inline-flex min-h-12 cursor-pointer items-center text-sea underline underline-offset-[0.2em]">
+                      <summary class="inline-flex min-h-tap cursor-pointer items-center text-sea underline underline-offset-[0.2em]">
                         Change or remove {person.full_name}
                       </summary>
                       <form method="POST" action={actions.admin.updatePerson} class="mt-2 space-y-3 bg-paper p-4">
@@ -122,7 +122,7 @@ const describe = (p: Member) =>
                           <label for={`edit-email-${person.id}`} class={label}>Email (leave empty if they will not log in)</label>
                           <input id={`edit-email-${person.id}`} name="email" type="email" value={person.email ?? ''} class={field} />
                         </div>
-                        <label class="flex min-h-12 items-center gap-3">
+                        <label class="flex min-h-tap items-center gap-3">
                           <input type="checkbox" name="is_child" checked={person.is_child} class="size-6" /> Child
                         </label>
                         <button type="submit" class="button">Save changes</button>
@@ -131,7 +131,7 @@ const describe = (p: Member) =>
                         <form method="POST" action={actions.admin.removePerson} class="mt-3 bg-paper p-4">
                           <input type="hidden" name="person_id" value={person.id} />
                           <input type="hidden" name="full_name" value={person.full_name} />
-                          <label class="flex min-h-12 items-center gap-3">
+                          <label class="flex min-h-tap items-center gap-3">
                             <input type="checkbox" name="confirm" value="true" required class="size-6" />
                             Yes, remove {person.full_name} and their replies
                           </label>
@@ -142,8 +142,8 @@ const describe = (p: Member) =>
                   </li>
                 ))}
               </ul>
-              <details class="mt-3 max-w-[38rem]">
-                <summary class="inline-flex min-h-12 cursor-pointer items-center text-sea underline underline-offset-[0.2em]">
+              <details class="mt-3 max-w-measure">
+                <summary class="inline-flex min-h-tap cursor-pointer items-center text-sea underline underline-offset-[0.2em]">
                   Add someone to {household.label}
                 </summary>
                 <form method="POST" action={actions.admin.addPerson} class="mt-2 space-y-3 bg-paper p-4">
@@ -156,21 +156,21 @@ const describe = (p: Member) =>
                     <label for={`add-email-${household.id}`} class={label}>Email (optional)</label>
                     <input id={`add-email-${household.id}`} name="email" type="email" class={field} />
                   </div>
-                  <label class="flex min-h-12 items-center gap-3">
+                  <label class="flex min-h-tap items-center gap-3">
                     <input type="checkbox" name="is_child" class="size-6" /> Child
                   </label>
                   <button type="submit" class="button">Add person</button>
                 </form>
               </details>
               {!hasOrganiser && (
-                <details class="mt-1 max-w-[38rem]">
-                  <summary class="inline-flex min-h-12 cursor-pointer items-center text-sea underline underline-offset-[0.2em]">
+                <details class="mt-1 max-w-measure">
+                  <summary class="inline-flex min-h-tap cursor-pointer items-center text-sea underline underline-offset-[0.2em]">
                     Remove the whole household
                   </summary>
                   <form method="POST" action={actions.admin.removeHousehold} class="mt-2 bg-paper p-4">
                     <input type="hidden" name="household_id" value={household.id} />
                     <input type="hidden" name="label" value={household.label} />
-                    <label class="flex min-h-12 items-center gap-3">
+                    <label class="flex min-h-tap items-center gap-3">
                       <input type="checkbox" name="confirm" value="true" required class="size-6" />
                       Yes, remove {household.label}, everyone in it and their replies
                     </label>

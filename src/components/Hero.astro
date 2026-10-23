@@ -1,0 +1,34 @@
+---
+/**
+ * The welcome page's opening photo, edge to edge, with lace along its bottom edge.
+ * Which photo is shown, and its words, come from content/photos/ (the one with page: /).
+ */
+import LaceBand from './LaceBand.astro';
+import { photoForPage } from '../lib/photos';
+
+const photo = await photoForPage('/');
+---
+
+{
+  photo && (
+    <figure class="hero">
+      <img
+        src={photo.src}
+        srcset={photo.srcset}
+        sizes="100vw"
+        alt={photo.alt}
+        width={photo.width}
+        height={photo.height}
+        fetchpriority="high"
+        decoding="async"
+        style={`object-position: ${photo.focus};`}
+      />
+      <figcaption class="hero-credit">
+        {photo.caption}, <a href={photo.creditUrl} rel="noopener" target="_blank">{photo.creditName}</a>
+      </figcaption>
+      <div class="hero-lace hidden sm:block">
+        <LaceBand tone="paper" />
+      </div>
+    </figure>
+  )
+}

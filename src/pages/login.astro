@@ -29,7 +29,7 @@ const notOnList = Astro.url.searchParams.get('reason') === 'not-on-list';
           </p>
         </div>
         <p class="mt-6">
-          <a href="/login" class="inline-flex min-h-12 items-center">Use a different email address</a>
+          <a href="/login" class="inline-flex min-h-tap items-center">Use a different email address</a>
         </p>
       </>
     ) : (
@@ -41,7 +41,7 @@ const notOnList = Astro.url.searchParams.get('reason') === 'not-on-list';
         {loggedOut && <Note>You are logged out. See you soon!</Note>}
         {notOnList && <Note>Your email address is not on the guest list. Please ask the organisers to add you.</Note>}
         {otherError && <Note>{otherError}</Note>}
-        <form method="POST" action={actions.auth.requestLink} class="mt-6 max-w-[30rem]" novalidate>
+        <form method="POST" action={actions.auth.requestLink} class="mt-6 max-w-form" novalidate>
           <label for="email" class="block font-bold">Your email address</label>
           <input
             id="email"
@@ -54,7 +54,7 @@ const notOnList = Astro.url.searchParams.get('reason') === 'not-on-list';
             required
             aria-describedby={emailError ? 'email-error' : undefined}
             aria-invalid={emailError ? 'true' : undefined}
-            class="mt-2 block min-h-14 w-full rounded-md border border-ink-soft bg-paper px-4 text-[1.15rem]"
+            class="mt-2 block min-h-14 w-full rounded-md border border-ink-soft bg-paper px-4 text-lead"
           />
           {emailError && <p id="email-error" class="mt-2 font-bold text-clay">{emailError}</p>}
           <button type="submit" class="button mt-5 w-full sm:w-auto">Send me a login link</button>

@@ -1,0 +1,28 @@
+---
+/** A photo mounted like a postcard, with its caption and credit, all read from content/photos/. */
+import type { PhotoImage } from '../lib/photos';
+
+interface Props {
+  photo: PhotoImage;
+  class?: string;
+}
+const { photo, class: className } = Astro.props;
+---
+
+<figure class:list={['postcard', className]}>
+  <img
+    src={photo.src}
+    srcset={photo.srcset}
+    sizes="(min-width: 40rem) 19rem, calc(100vw - 2rem)"
+    alt={photo.alt}
+    width={photo.width}
+    height={photo.height}
+    loading="lazy"
+    decoding="async"
+    style={`aspect-ratio: ${photo.aspect}; object-position: ${photo.focus};`}
+  />
+  <figcaption>
+    {photo.caption}
+    <a href={photo.creditUrl} rel="noopener" target="_blank">{photo.creditName}</a>
+  </figcaption>
+</figure>

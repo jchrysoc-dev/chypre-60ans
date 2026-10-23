@@ -5,12 +5,15 @@
  */
 interface Props {
   class?: string;
+  /** thread: on linen. honey: on the invitation, in golden light. paper: over a photo. */
+  tone?: 'thread' | 'honey' | 'paper';
 }
-const { class: className } = Astro.props;
+const { class: className, tone = 'thread' } = Astro.props;
+const toneClass = { thread: 'text-thread', honey: 'text-honey', paper: 'text-paper' }[tone];
 const id = `lace-${Math.random().toString(36).slice(2, 8)}`;
 ---
 
-<svg class:list={['block h-7 w-full text-thread', className]} aria-hidden="true" focusable="false">
+<svg class:list={['block h-7 w-full', toneClass, className]} aria-hidden="true" focusable="false">
   <defs>
     <pattern id={id} width="28" height="28" patternUnits="userSpaceOnUse">
       <g fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round">

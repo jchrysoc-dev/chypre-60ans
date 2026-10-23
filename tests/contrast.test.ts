@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-const css = readFileSync(new URL('../src/styles/global.css', import.meta.url), 'utf-8');
+const css = readFileSync(new URL('../src/styles/tokens.css', import.meta.url), 'utf-8');
 const color = (name: string) => {
   const match = css.match(new RegExp(`--color-${name}:\\s*(#[0-9a-f]{6})`, 'i'));
   if (!match) throw new Error(`--color-${name} not found`);
@@ -33,6 +33,9 @@ const pairs: [string, string, string][] = [
   ['clay times on linen', color('clay'), color('linen')],
   ['clay date on paper', color('clay'), color('paper')],
   ['olive on linen', color('olive'), color('linen')],
+  ['paper on ink (photo credit over the hero)', color('paper'), color('ink')],
+  ['ink on honey-soft', color('ink'), color('honey-soft')],
+  ['ink-soft on honey-soft', color('ink-soft'), color('honey-soft')],
 ];
 
 describe('WCAG AA contrast', () => {

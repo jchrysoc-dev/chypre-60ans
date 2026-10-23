@@ -9,6 +9,7 @@ import {
   cyprusResourceSchema,
   eventSchema,
   pageSchema,
+  photoSchema,
 } from './lib/content-schemas';
 
 /**
@@ -47,4 +48,5 @@ export const collections = {
   activities: defineCollection({ loader: markdown('activities'), schema: activitySchema }),
   accommodation: defineCollection({ loader: markdown('accommodation'), schema: accommodationSchema }),
   cyprus: defineCollection({ loader: markdown('cyprus'), schema: cyprusResourceSchema }),
+  photos: defineCollection({ loader: glob({ pattern: '*.yaml', base: './content/photos' }), schema: photoSchema }),
 };

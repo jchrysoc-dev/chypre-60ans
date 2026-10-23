@@ -1,12 +1,20 @@
 ---
+import Postcard from './Postcard.astro';
+import { photoForPage } from '../lib/photos';
+
 interface Props {
   title: string;
   lead?: string;
 }
 const { title, lead } = Astro.props;
+// A page that has a photo in content/photos/ (matching its address) gets a postcard beside its title.
+const photo = await photoForPage(Astro.url.pathname);
 ---
 
-<header class="mb-8 max-w-[38rem]">
-  <h1 class="text-[2.5rem] sm:text-[3.25rem]">{title}</h1>
-  {lead && <p class="mt-3 text-[1.25rem] leading-normal text-ink-soft">{lead}</p>}
+<header class:list={['mb-block', photo && 'sm:grid sm:grid-cols-[minmax(0,1fr)_19rem] sm:items-start sm:gap-x-10']}>
+  <div class="max-w-measure">
+    <h1 class="text-title">{title}</h1>
+    {lead && <p class="mt-3 text-lead text-ink-soft">{lead}</p>}
+  </div>
+  {photo && <Postcard photo={photo} class="mt-6 sm:mt-2" />}
 </header>

@@ -22,8 +22,8 @@ const rows = [
 ];
 ---
 
-<section aria-labelledby="facts-heading" class="max-w-[38rem]">
-  <h2 id="facts-heading" class="text-[2rem]">The party</h2>
+<section aria-labelledby="facts-heading" class="max-w-measure">
+  <h2 id="facts-heading" class="text-heading">The party</h2>
   <dl class="ruled mt-4 border-y border-thread">
     {
       rows.map((row) => (
@@ -32,7 +32,7 @@ const rows = [
           <dd class:list={[row.value === TO_BE_CONFIRMED && 'text-ink-soft italic']}>
             {row.value}
             {row.address && <span class="block">{row.address}</span>}
-            {row.maps && <a href={row.maps} class="inline-flex min-h-12 items-center">Open the map</a>}
+            {row.maps && <a href={row.maps} class="inline-flex min-h-tap items-center">Open the map</a>}
           </dd>
         </div>
       ))

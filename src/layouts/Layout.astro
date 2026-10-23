@@ -27,6 +27,7 @@ const nav = [
   { href: '/participants', label: 'Participants' },
   { href: '/cyprus', label: 'Cyprus' },
 ];
+const hasHero = Astro.slots.has('hero');
 const current = Astro.url.pathname.replace(/\/$/, '') || '/';
 const isCurrent = (href: string) => (href === '/' ? current === '/' : current.startsWith(href));
 ---
@@ -37,15 +38,15 @@ const isCurrent = (href: string) => (href === '/' ? current === '/' : current.st
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
-    <meta name="theme-color" content="#f6f1e6" />
+    <meta name="theme-color" content="#f8f1e3" />
     {description && <meta name="description" content={description} />}
     <title>{title === siteTitle ? siteTitle : `${title} – ${siteTitle}`}</title>
     <slot name="head" />
   </head>
   <body class="min-h-screen">
     <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 button">Skip to content</a>
-    <header class="mx-auto max-w-4xl px-4 pt-5">
-      {!hideSiteTitle && <a href="/" class="font-display text-[1.65rem] leading-tight text-ink no-underline">{siteTitle}</a>}
+    <header class="mx-auto max-w-page px-gutter pt-5">
+      {!hideSiteTitle && <a href="/" class="font-display text-brand leading-tight text-ink no-underline">{siteTitle}</a>}
       {bare ? <div class="mt-4 border-b border-thread" /> : (
       <nav aria-label="Main" class:list={['border-b border-thread', !hideSiteTitle && 'mt-2']}>
         <ul class="-ml-3 flex flex-wrap">
@@ -56,7 +57,7 @@ const isCurrent = (href: string) => (href === '/' ? current === '/' : current.st
                   href={item.href}
                   aria-current={isCurrent(item.href) ? 'page' : undefined}
                   class:list={[
-                    'relative inline-flex min-h-12 items-center px-3 font-bold no-underline',
+                    'relative inline-flex min-h-tap items-center px-3 font-bold no-underline',
                     isCurrent(item.href)
                       ? 'text-ink after:absolute after:inset-x-3 after:bottom-1.5 after:h-[3px] after:rounded-full after:bg-clay'
                       : 'text-sea hover:text-sea-deep',
@@ -72,22 +73,25 @@ const isCurrent = (href: string) => (href === '/' ? current === '/' : current.st
       )}
     </header>
 
-    <main id="main" class="mx-auto max-w-4xl px-4 py-8 sm:py-12">
+    {/* Full-width opening photo (the welcome page). It sits outside the page column. */}
+    <slot name="hero" />
+
+    <main id="main" class:list={['mx-auto max-w-page px-gutter pb-block', hasHero ? 'pt-0' : 'pt-block']}>
       <slot />
     </main>
 
-    <footer class="mx-auto max-w-4xl px-4 pb-10 text-ink-soft">
+    <footer class="mx-auto max-w-page px-gutter pb-10 text-ink-soft">
       {current === '/' ? <hr class="border-thread" /> : <LaceBand />}
       <p class="mt-4 flex flex-wrap gap-x-6 gap-y-1">
-        {person && <a href="/me" class="inline-flex min-h-12 items-center">My details</a>}
-        {person?.role === 'admin' && <a href="/admin" class="inline-flex min-h-12 items-center">Guest list</a>}
-        <a href="/privacy" class="inline-flex min-h-12 items-center">Your privacy</a>
+        {person && <a href="/me" class="inline-flex min-h-tap items-center">My details</a>}
+        {person?.role === 'admin' && <a href="/admin" class="inline-flex min-h-tap items-center">Guest list</a>}
+        <a href="/privacy" class="inline-flex min-h-tap items-center">Your privacy</a>
       </p>
       {
         person && (
           <form method="POST" action={'/login' + actions.auth.logout} class="mt-2">
             <span>Logged in as {person.full_name}. </span>
-            <button type="submit" class="inline-flex min-h-12 items-center text-sea underline underline-offset-[0.2em]">
+            <button type="submit" class="inline-flex min-h-tap items-center text-sea underline underline-offset-[0.2em]">
               Log out
             </button>
           </form>

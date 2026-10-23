@@ -1,5 +1,6 @@
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { accommodationSchema, activitySchema, eventSchema } from '../src/lib/content-schemas';
+import { accommodationSchema, activitySchema, eventSchema, photoSchema } from '../src/lib/content-schemas';
 
 const activity = {
   title: 'Boat trip',
@@ -98,5 +99,43 @@ describe('eventSchema', () => {
     expect(messages(eventSchema.safeParse({ ...event, party }))).toEqual([
       'The party end time must be after its start time.',
     ]);
+  });
+});
+
+describe('photoSchema', () => {
+  const photo = {
+    unsplash_id: 'photo-1701121685501-03d44cca164c',
+    alt: 'Waves at sunset.',
+    caption: 'Sunset near Paphos',
+    credit_name: 'Sergei Gussev on Unsplash',
+    credit_url: 'https://unsplash.com/photos/ZjojRyMGTro',
+    aspect: '3:2',
+  };
+
+  it('accepts a photo and defaults the focus to the centre', () => {
+    expect(photoSchema.parse(photo).focus).toBe('50% 50%');
+  });
+
+  it('rejects a page that does not start with a slash, with a readable message', () => {
+    expect(messages(photoSchema.safeParse({ ...photo, page: 'activities' }))[0]).toContain('start with /');
+  });
+
+  it('rejects an aspect that is not offered', () => {
+    expect(messages(photoSchema.safeParse({ ...photo, aspect: '1:1' }))[0]).toContain('3:2');
+  });
+
+  it('has an image file for every photo in content/photos', () => {
+    const sizes = JSON.parse(readFileSync(new URL('../src/lib/photo-sizes.json', import.meta.url), 'utf-8'));
+    const ids = readdirSync(new URL('../content/photos/', import.meta.url))
+      .filter((name) => name.endsWith('.yaml'))
+      .map((name) => name.replace(/\.yaml$/, ''));
+    expect(ids.length).toBeGreaterThan(0);
+    for (const id of ids) {
+      expect(sizes[id], `${id} has no image files: run node scripts/fetch-photos.mjs`).toBeTruthy();
+      for (const width of sizes[id]) {
+        const file = new URL(`../public/photos/${id}-${width}.webp`, import.meta.url);
+        expect(statSync(file).size, `${id}-${width}.webp is over 200 KB`).toBeLessThanOrEqual(200 * 1024);
+      }
+    }
   });
 });

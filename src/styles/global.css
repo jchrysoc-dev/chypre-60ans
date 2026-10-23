@@ -2,27 +2,7 @@
 @plugin '@tailwindcss/typography';
 @import '@fontsource/gfs-didot';
 @import '@fontsource-variable/atkinson-hyperlegible-next';
-
-/*
- * An invitation printed in navy ink on linen, edged with Lefkara lace.
- * Text/background pairs are WCAG AA, checked in tests/contrast.test.ts.
- * "thread" is decorative only (lace, rules) and never used for text.
- */
-@theme {
-  --color-linen: #f6f1e6;
-  --color-paper: #fffdf8;
-  --color-ink: #1c3149;
-  --color-ink-soft: #4a5868;
-  --color-sea: #1f5c8a;
-  --color-sea-deep: #173f60;
-  --color-clay: #8f3e22;
-  --color-olive: #56622a;
-  --color-thread: #c9b99a;
-
-  /* Didot is for display sizes only (≥ 28px); Atkinson Hyperlegible was designed for low-vision readers. */
-  --font-display: 'GFS Didot', 'Didot', 'Bodoni 72', Georgia, serif;
-  --font-sans: 'Atkinson Hyperlegible Next Variable', 'Atkinson Hyperlegible', 'Segoe UI', system-ui, sans-serif;
-}
+@import './tokens.css';
 
 @layer base {
   /* Base 18px (1.125rem), scaling with the visitor's own browser text size. */
@@ -54,7 +34,7 @@
 
 @layer components {
   .prose-site {
-    @apply prose prose-lg max-w-[38rem];
+    @apply prose prose-lg max-w-measure;
     --tw-prose-body: var(--color-ink);
     --tw-prose-headings: var(--color-ink);
     --tw-prose-links: var(--color-sea);
@@ -66,13 +46,13 @@
   }
 
   .button {
-    @apply inline-flex min-h-12 items-center justify-center rounded-md bg-sea px-6 py-3 font-bold text-paper no-underline;
+    @apply inline-flex min-h-tap items-center justify-center rounded-control bg-sea px-6 py-3 font-bold text-paper no-underline;
   }
   .button:hover {
     @apply bg-sea-deep text-paper;
   }
   .button-quiet {
-    @apply inline-flex min-h-12 items-center justify-center rounded-md px-6 py-3 font-bold text-sea no-underline ring-1 ring-sea;
+    @apply inline-flex min-h-tap items-center justify-center rounded-control px-6 py-3 font-bold text-sea no-underline ring-1 ring-sea;
   }
   .button-quiet:hover {
     @apply bg-paper ring-2;
@@ -85,6 +65,61 @@
 
   /* A short note about something not available yet. */
   .note {
-    @apply max-w-[38rem] border-l-4 border-olive bg-paper py-3 pr-4 pl-4 text-ink;
+    @apply max-w-measure border-l-4 border-olive bg-paper py-3 pr-4 pl-4 text-ink;
+  }
+
+  /*
+   * A photo mounted like a postcard: paper border, a caption underneath and a small
+   * tilt on wider screens. Used beside each page's title (see PageIntro).
+   */
+  .postcard {
+    @apply bg-paper p-2 pb-0 shadow-lifted ring-1 ring-thread;
+  }
+  .postcard img {
+    @apply block h-auto w-full object-cover;
+  }
+  .postcard figcaption {
+    @apply px-1 py-2 text-caption text-ink;
+  }
+  .postcard figcaption a {
+    @apply block text-ink-soft;
+  }
+  @media (max-width: 39.999rem) {
+    /* Shorter on phones, so the page's own content is not pushed off the first screen. */
+    .postcard img {
+      aspect-ratio: 5 / 3 !important;
+    }
+  }
+  @media (min-width: 40rem) {
+    .postcard {
+      transform: rotate(-1.25deg);
+    }
+  }
+
+  /*
+   * The welcome page's opening photo: edge to edge, with a band of lace along its bottom
+   * edge. The invitation panel overlaps it (see index.astro).
+   */
+  .hero {
+    @apply relative h-[21rem] overflow-hidden bg-ink sm:h-[28rem] lg:h-[34rem];
+  }
+  .hero img {
+    @apply absolute inset-0 block h-full w-full object-cover;
+  }
+  .hero::after {
+    /* Seats the lace on the photo and keeps it readable on light water. */
+    content: '';
+    @apply pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-ink/45 to-transparent;
+  }
+  .hero-lace {
+    @apply absolute inset-x-0 bottom-0 z-10 text-paper;
+  }
+  .hero-credit {
+    /* Solid navy behind the text, so it passes AA on any photo. */
+    @apply absolute top-3 left-3 z-10 max-w-[calc(100%-1.5rem)] bg-ink px-3 py-1.5 text-caption text-paper;
+  }
+  .hero-credit a,
+  .hero-credit a:hover {
+    @apply text-paper;
   }
 }

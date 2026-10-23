@@ -156,5 +156,30 @@ export const cyprusResourceSchema = z.object({
   links: z.array(link).default([]),
 });
 
+/* ---------- content/photos/<id>.yaml: one photo per file ---------- */
+
+export const photoSchema = z.object({
+  /** The photo's id on unsplash.com (the part of its image address after "images.unsplash.com/"). Used by scripts/fetch-photos.mjs. */
+  unsplash_id: z
+    .string({ error: '"unsplash_id" must be text like "photo-1701121685501-03d44cca164c".' })
+    .regex(/^photo-[\w-]+$/, { error: '"unsplash_id" must look like "photo-1701121685501-03d44cca164c".' }),
+  /** What the photo shows, for people who cannot see it. Not a title. */
+  alt: text('alt'),
+  /** Short line printed under the photo, e.g. "Sunset near Paphos". */
+  caption: text('caption'),
+  credit_name: text('credit_name'),
+  credit_url: url('credit_url'),
+  /** Shape the photo is cropped to, as width:height. */
+  aspect: z.enum(['3:2', '4:3', '16:9'], { error: '"aspect" must be one of: 3:2, 4:3, 16:9.' }),
+  /** Which part of the photo stays in view when it is cropped, as "x% y%". Left to right, top to bottom. */
+  focus: z
+    .string()
+    .regex(/^\d{1,3}% \d{1,3}%$/, { error: '"focus" must look like "50% 50%".' })
+    .default('50% 50%'),
+  /** The page this photo decorates, e.g. "/activities". Leave out if it is not used on a page. */
+  page: z.string().regex(/^\/[a-z-]*$/, { error: '"page" must start with / and use lowercase letters, e.g. "/activities".' }).optional(),
+});
+
 export type EventFacts = z.infer<typeof eventSchema>;
+export type Photo = z.infer<typeof photoSchema>;
 export type Activity = z.infer<typeof activitySchema>;

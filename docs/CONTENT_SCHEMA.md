@@ -83,3 +83,19 @@ Files: `welcome.md`, `thank-you.md`, `privacy.md`.
 | `order` | whole number | yes | Lower comes first. Use steps of 10 so items can be inserted between. |
 | `links` | list of `{ label, url }` | no | Shown under "Useful links". |
 | body | Markdown | yes | The article. |
+
+## `content/photos/<id>.yaml`: one photo per file
+
+Photos are from [Unsplash](https://unsplash.com) (free licence). The file name is the photo's id and names its image files. To add or change a photo, edit its `.yaml` and run `node scripts/fetch-photos.mjs`, which downloads it, crops it and writes compressed WebP files (each under 200 KB) to `public/photos/`.
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `unsplash_id` | text | yes | The part of the image address after `images.unsplash.com/`, like `photo-1701121685501-03d44cca164c`. |
+| `alt` | text | yes | What the photo shows, for people who cannot see it. |
+| `caption` | text | yes | Short line under the photo. |
+| `credit_name` | text | yes | e.g. "Sergei Gussev on Unsplash". |
+| `credit_url` | link | yes | The photo's page on Unsplash. |
+| `aspect` | `3:2` \| `4:3` \| `16:9` | yes | Shape the photo is cropped to. |
+| `focus` | text like `75% 50%` | no | Part of the photo kept in view when cropped (left to right, top to bottom). Defaults to the centre. |
+| `page` | text like `/activities` | no | The page the photo decorates. `/` is the big photo at the top of the Welcome page, any other page gets a postcard next to its title. Only the first photo (by file name) for a page is shown. |
+
