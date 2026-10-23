@@ -9,7 +9,7 @@
  * Existing files are skipped. Add --force to rebuild them all.
  * Also writes public/photos/sizes.json, the list of sizes each photo has.
  */
-import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import sharp from 'sharp';
 import { parse as parseYaml } from 'yaml';
 
@@ -36,10 +36,18 @@ async function download(address, id) {
 
 const exists = (url) => stat(url).then(() => true, () => false);
 
-for (const file of (await readdir(contentDir)).filter((name) => name.endsWith('.yaml')).sort()) {
-  const id = file.replace(/\.yaml$/, '');
-  const photo = parseYaml(await readFile(new URL(file, contentDir), 'utf-8'));
-  if (!force && (await Promise.all(WIDTHS.map((w) => exists(new URL(`${id}-${w}.webp`, outDir))))).every(Boolean)) {
+// Sizes made earlier (the widths that did not fit in 200 KB are left out on purpose).
+const known = await readFile(new URL('sizes.json', outDir), 'utf-8').then(JSON.parse, () => ({}));
+
+const ids = (await readdir(contentDir))
+  .filter((name) => name.endsWith('.yaml') && !name.startsWith('_'))
+  .map((name) => name.replace(/\.yaml$/, ''))
+  .sort();
+
+for (const id of ids) {
+  const photo = parseYaml(await readFile(new URL(`${id}.yaml`, contentDir), 'utf-8'));
+  const madeBefore = known[id]?.length && (await Promise.all(known[id].map((w) => exists(new URL(`${id}-${w}.webp`, outDir))))).every(Boolean);
+  if (!force && madeBefore) {
     console.log(`${id}: already there`);
     continue;
   }
@@ -94,6 +102,15 @@ for (const file of (await readdir(contentDir)).filter((name) => name.endsWith('.
     }
     await writeFile(new URL(`${id}-${w}.webp`, outDir), output);
     console.log(`${id}-${w}.webp  ${Math.round(output.length / 1024)} KB (quality ${quality})`);
+  }
+}
+
+// Remove copies of photos that are no longer listed in content/photos/.
+for (const name of await readdir(outDir)) {
+  const match = name.match(/^(.+)-\d+\.webp$/);
+  if (match && !ids.includes(match[1])) {
+    await rm(new URL(name, outDir));
+    console.log(`${name}: removed (no longer listed in content/photos/)`);
   }
 }
 
