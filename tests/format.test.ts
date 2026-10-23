@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cyprusDay, formatDate, formatEuros, formatTimeRange, orTbd } from '../src/lib/format';
+import { cyprusDateTime, cyprusDay, formatDate, formatEuros, formatTimeRange, orTbd } from '../src/lib/format';
 
 describe('format', () => {
   it('formats calendar dates without time-zone drift', () => {
@@ -23,5 +23,10 @@ describe('format', () => {
 
   it('shows "To be confirmed" for TBD', () => {
     expect(orTbd('TBD', String)).toBe('To be confirmed');
+  });
+
+  it('writes timestamps for spreadsheets in Cyprus time', () => {
+    expect(cyprusDateTime('2027-05-27T07:00:00+00:00')).toBe('2027-05-27 10:00');
+    expect(cyprusDateTime(null)).toBe('');
   });
 });

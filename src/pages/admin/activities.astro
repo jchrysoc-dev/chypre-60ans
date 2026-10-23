@@ -1,0 +1,156 @@
+---
+/** Who is going to what, for organisers only (the middleware and every action check this). */
+import { actions, isInputError } from 'astro:actions';
+import Layout from '../../layouts/Layout.astro';
+import PageIntro from '../../components/PageIntro.astro';
+import AdminNav from '../../components/AdminNav.astro';
+import { ensureActivitiesSynced, loadAdminActivities, type AdminActivity, type AdminSignup } from '../../lib/activities';
+import { formatDate, formatTime, cyprusDay } from '../../lib/format';
+import { people } from '../../lib/signups';
+
+const db = Astro.locals.supabase;
+
+const results = [actions.admin.signUpGuest, actions.admin.removeSignUp].map((action) => Astro.getActionResult(action));
+const done = results.find((r) => r?.data)?.data?.message;
+const failed = results.find((r) => r?.error)?.error;
+const failure = failed
+  ? isInputError(failed)
+    ? Object.values(failed.fields).flat().filter(Boolean).join(' ')
+    : failed.message
+  : undefined;
+
+await ensureActivitiesSynced();
+const all = await loadAdminActivities(db);
+const current = all.filter((a) => a.inContent);
+const removed = all.filter((a) => !a.inContent && a.going.length + a.waiting.length > 0);
+
+const { data: everyone = [] } = await db.from('people').select('id, full_name').order('full_name');
+
+const children = (list: AdminSignup[]) => list.filter((s) => s.isChild).length;
+const headcount = (a: AdminActivity) => {
+  const going = a.going.length;
+  const kids = children(a.going);
+  const split = going ? ` (${going - kids} ${going - kids === 1 ? 'adult' : 'adults'}, ${kids} ${kids === 1 ? 'child' : 'children'})` : '';
+  return `Going: ${going}${a.capacity ? ` of ${a.capacity}` : ''}${split} · Waiting: ${a.waiting.length}`;
+};
+const when = (iso: string) => `${formatDate(cyprusDay(iso))}, ${formatTime(iso)}`;
+
+const field = 'mt-1 block min-h-tap w-full rounded-md border border-ink-soft bg-paper px-3';
+---
+
+<Layout title="Activities: who is going">
+  <PageIntro title="Activities" lead="Who is going to each activity, and who is waiting for a place." />
+  <AdminNav />
+
+  <p><a href="/admin/activities.csv" download class="button-quiet">Download all sign-ups (CSV)</a></p>
+
+  <div aria-live="polite" class="mt-4">
+    {done && <p class="note">{done}</p>}
+    {failure && <p class="note border-clay font-bold">{failure}</p>}
+  </div>
+
+  {
+    [...current, ...removed].map((activity) => (
+      <section id={activity.id} class="mt-section" aria-labelledby={`h-${activity.id}`}>
+        <h2 id={`h-${activity.id}`} class="text-heading">
+          {activity.cancelled ? <s>{activity.title}</s> : activity.title}
+        </h2>
+        <p class="mt-1 text-ink-soft">
+          {when(activity.start)}
+          {activity.cancelled && <strong class="ml-2 text-clay">Cancelled: let these people know.</strong>}
+          {!activity.inContent && <strong class="ml-2 text-clay">No longer on the website. Ask Jacques to tidy this up.</strong>}
+        </p>
+        <p class="mt-2 font-bold">{headcount(activity)}</p>
+
+        <div class="mt-4 grid gap-8 sm:grid-cols-2">
+          <div>
+            <h3>Going</h3>
+            {activity.going.length === 0 && <p class="mt-1 text-ink-soft">Nobody yet.</p>}
+            <ul class="ruled mt-2">
+              {activity.going.map((s) => (
+                <li class="py-2">
+                  <span class="font-bold">{s.fullName}</span>
+                  {s.isChild && <span class="text-ink-soft"> (child)</span>}
+                  <span class="block text-ink-soft">{s.household}</span>
+                  {s.promotedAt && <span class="block text-ink-soft">From the waiting list, {when(s.promotedAt)}</span>}
+                  <details>
+                    <summary class="inline-flex min-h-tap cursor-pointer items-center text-sea underline">Remove</summary>
+                    <form method="POST" action={`${actions.admin.removeSignUp}#${activity.id}`} class="bg-paper p-3">
+                      <input type="hidden" name="activity_id" value={activity.id} />
+                      <input type="hidden" name="person_id" value={s.personId} />
+                      <input type="hidden" name="full_name" value={s.fullName} />
+                      <label class="flex min-h-tap items-center gap-3">
+                        <input type="checkbox" name="confirm" value="true" required class="size-6" />
+                        Yes, take {s.fullName} off this activity
+                      </label>
+                      <button type="submit" class="button-quiet mt-2">Remove</button>
+                    </form>
+                  </details>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h3>Waiting list</h3>
+            {activity.waiting.length === 0 && <p class="mt-1 text-ink-soft">Nobody waiting.</p>}
+            <ol class="ruled mt-2">
+              {activity.waiting.map((s) => (
+                <li class="py-2">
+                  <span class="font-bold">{s.fullName}</span>
+                  {s.isChild && <span class="text-ink-soft"> (child)</span>}
+                  <span class="block text-ink-soft">
+                    {s.household} · group {s.groupNumber}, {s.peopleAhead ? `${people(s.peopleAhead)} ahead` : 'first in line'}
+                  </span>
+                  <details>
+                    <summary class="inline-flex min-h-tap cursor-pointer items-center text-sea underline">Give a place or remove</summary>
+                    <form method="POST" action={`${actions.admin.signUpGuest}#${activity.id}`} class="bg-paper p-3">
+                      <input type="hidden" name="activity_id" value={activity.id} />
+                      <input type="hidden" name="person_id" value={s.personId} />
+                      <input type="hidden" name="over_capacity" value="on" />
+                      <button type="submit" class="button-quiet">Give {s.fullName} a place now, even if it is full</button>
+                    </form>
+                    <form method="POST" action={`${actions.admin.removeSignUp}#${activity.id}`} class="mt-2 bg-paper p-3">
+                      <input type="hidden" name="activity_id" value={activity.id} />
+                      <input type="hidden" name="person_id" value={s.personId} />
+                      <input type="hidden" name="full_name" value={s.fullName} />
+                      <label class="flex min-h-tap items-center gap-3">
+                        <input type="checkbox" name="confirm" value="true" required class="size-6" />
+                        Yes, take {s.fullName} off the waiting list
+                      </label>
+                      <button type="submit" class="button-quiet mt-2">Remove</button>
+                    </form>
+                  </details>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+
+        {activity.inContent && !activity.cancelled && (
+          <details class="mt-4 max-w-measure">
+            <summary class="inline-flex min-h-tap cursor-pointer items-center text-sea underline">
+              Sign someone up for {activity.title}
+            </summary>
+            <form method="POST" action={`${actions.admin.signUpGuest}#${activity.id}`} class="mt-2 space-y-3 bg-paper p-4">
+              <input type="hidden" name="activity_id" value={activity.id} />
+              <div>
+                <label for={`who-${activity.id}`} class="block font-bold">Who</label>
+                <select id={`who-${activity.id}`} name="person_id" required class={field}>
+                  <option value="">Choose a guest…</option>
+                  {(everyone ?? []).map((p) => (
+                    <option value={p.id}>{p.full_name}</option>
+                  ))}
+                </select>
+              </div>
+              <label class="flex min-h-tap items-center gap-3">
+                <input type="checkbox" name="over_capacity" class="size-6" /> Give a place even if it is full
+              </label>
+              <button type="submit" class="button">Sign up</button>
+            </form>
+          </details>
+        )}
+      </section>
+    ))
+  }
+</Layout>

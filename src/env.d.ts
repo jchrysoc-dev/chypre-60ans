@@ -1,5 +1,8 @@
 /// <reference types="astro/client" />
 
+/** ISO time of the build (astro.config.mjs). */
+declare const __BUILT_AT__: string;
+
 declare namespace App {
   interface Locals {
     supabase: import('./lib/supabase').VisitorClient;

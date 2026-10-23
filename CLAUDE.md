@@ -22,6 +22,8 @@ You are helping Jacques's mother edit her 60th birthday website. She is **not te
 - For a new item, copy the template in its folder (`content/activities/_template.md`, `content/accommodation/_template.md`, `content/cyprus/_template.md`, `content/photos/_template.yaml`), and fill it in. The comments in each template explain every field.
 - Event facts (date, time, venue, dress code) live **only** in `content/event.yaml`. Never repeat them in another file.
 - Never rename an activity file: guests' sign-ups are tied to its file name.
+- To cancel an activity, add `status: cancelled` to its file. **Never delete an activity file** (sign-ups are tied to it, and Mum still needs to see who had signed up). If she asks to "remove" an activity, explain this in one sentence and cancel it instead, after her yes.
+- Lowering an activity's `capacity` never removes people who already have a place. Raising it gives places to the waiting list automatically once it's published.
 - To add a photo of her own: put the picture in `content/photos/originals/`, copy `content/photos/_template.yaml`, run `npm run photos`, then run `npm run check`.
 
 **Never delete without her clear yes**
@@ -41,7 +43,7 @@ You are helping Jacques's mother edit her 60th birthday website. She is **not te
 - Tell her: "It will be live in about 1 to 2 minutes. Refresh the website to see it."
 - If it still hasn't changed after 5 minutes, say so and tell her to message Jacques.
 
-**Guest information** (who has signed up, who is coming, who joined which activity, dietary needs) lives in a database, managed on the website's **/admin** page. You cannot see it and must not try. Tell her to open /admin.
+**Guest information** (who has signed up, who is coming, who joined which activity, dietary needs) lives in a database, managed on the website's **Organisers** pages (/admin: Guest list, Replies, Activities). You cannot see it and must not try. Tell her to open the **Organisers** link at the bottom of any page.
 
 **If she says something looks wrong:** offer to undo the last change (a revert), run `npm run check`, and publish it. If the website is still wrong, tell her to message Jacques.
 

@@ -44,9 +44,15 @@ const secret = createClient(base, SUPABASE_SECRET_KEY, { auth: { persistSession:
 // Migration applied?
 const ping = await anon.rpc('ping');
 report(ping.data === 'ok', 'Migration applied (public.ping() exists)', 'Run supabase/migrations/20261023120000_households_people_rsvps.sql in the SQL Editor.');
+// A real read, not a head request: head requests don't report a missing table.
+const activitiesTable = await secret.from('activities').select('id').limit(1);
+report(!activitiesTable.error, 'Activities migration applied (public.activities exists)', 'Run `npx supabase db push` (supabase/migrations/20261023130000_activities_signups.sql).');
+const anonSync = await anon.rpc('sync_activities', { p_activities: [], p_built_at: new Date().toISOString() });
+// 42501 = permission denied. Any other error (e.g. "function not found") proves nothing.
+report(anonSync.error?.code === '42501', 'Not logged in: cannot change activities', 'public.sync_activities is callable without login! Re-run the migration.');
 
 // Not logged in → no access to guest data.
-for (const table of ['households', 'people', 'rsvps'] as const) {
+for (const table of ['households', 'people', 'rsvps', 'activities', 'activity_signups'] as const) {
   const { data, error } = await anon.from(table).select('*').limit(1);
   report(Boolean(error) || (data?.length ?? 0) === 0, `Not logged in: cannot read ${table}`, 'Guest data is readable without login! Re-run the migration; do not change RLS.');
 }

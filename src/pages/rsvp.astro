@@ -1,10 +1,125 @@
 ---
+/** One reply form for the whole household. Saved in the database, seen only by the household and the organisers. */
+import { actions } from 'astro:actions';
+import { getEntry } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import PageIntro from '../components/PageIntro.astro';
-import Note from '../components/Note.astro';
+import { formatDate, isTbd } from '../lib/format';
+
+const db = Astro.locals.supabase;
+const householdId = Astro.locals.person!.household_id;
+const event = (await getEntry('event', 'event'))!.data;
+
+const result = Astro.getActionResult(actions.rsvp.save);
+
+const { data: members = [] } = await db
+  .from('people')
+  .select('id, full_name, is_child')
+  .eq('household_id', householdId)
+  .order('is_child')
+  .order('full_name');
+const { data: replies = [] } = await db
+  .from('rsvps')
+  .select('*')
+  .in('person_id', (members ?? []).map((m) => m.id));
+const replyOf = (id: string) => (replies ?? []).find((r) => r.person_id === id);
+
+const { start_date, end_date } = event.week;
+const weekKnown = !isTbd(start_date) && !isTbd(end_date);
+const weekHint = weekKnown ? `The birthday week is ${formatDate(start_date)} to ${formatDate(end_date)}.` : undefined;
+
+const field = 'mt-1 block min-h-tap w-full rounded-md border border-ink-soft bg-paper px-3';
+const label = 'block font-bold';
+const ANSWERS = [
+  ['yes', 'Yes, coming'],
+  ['maybe', 'Maybe'],
+  ['no', 'Sorry, can’t come'],
+] as const;
 ---
 
 <Layout title="RSVP">
-  <PageIntro title="RSVP" lead="Tell us who in your household is coming, and anything we should know." />
-  {/* Arrives in M3. */}<Note>One form for your whole household: who is coming, arrival and departure dates, flights, and dietary needs.</Note>
+  <PageIntro
+    title="RSVP"
+    lead={`Please reply for everyone in your household. You can come back and change it at any time.${weekHint ? ` ${weekHint}` : ''}`}
+  />
+
+  <div aria-live="polite">
+    {
+      result?.data && (
+        <p class="note">
+          {result.data.message} {result.data.leftActivities}{' '}
+          <a href="/activities">See the activities</a>
+        </p>
+      )
+    }
+    {result?.error && <p class="note border-clay font-bold">{result.error.message}</p>}
+  </div>
+
+  <form method="POST" action={actions.rsvp.save} class="mt-block max-w-measure space-y-10">
+    {
+      (members ?? []).map((member) => {
+        const r = replyOf(member.id);
+        const id = (name: string) => `${name}-${member.id}`;
+        return (
+          <fieldset class="space-y-5 border-t border-thread pt-6">
+            <legend class="float-left w-full text-heading">{member.full_name}</legend>
+
+            <div class="clear-both">
+              <p class={label} id={id('attending-label')}>
+                Coming to the party on {formatDate(event.party.date)}?
+              </p>
+              <div role="radiogroup" aria-labelledby={id('attending-label')} class="mt-1">
+                {ANSWERS.map(([value, text]) => (
+                  <label class="flex min-h-tap items-center gap-3">
+                    <input type="radio" name={id('attending')} value={value} checked={r?.attending === value} class="size-6 accent-sea" />
+                    {text}
+                  </label>
+                ))}
+              </div>
+              <p class="mt-1 text-ink-soft">Choosing “can’t come” also takes {member.full_name} off any activities.</p>
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label for={id('arrival_date')} class={label}>Arriving in Cyprus</label>
+                <input id={id('arrival_date')} name={id('arrival_date')} type="date" value={r?.arrival_date ?? ''} class={field} />
+              </div>
+              <div>
+                <label for={id('departure_date')} class={label}>Leaving Cyprus</label>
+                <input id={id('departure_date')} name={id('departure_date')} type="date" value={r?.departure_date ?? ''} class={field} />
+              </div>
+              <div>
+                <label for={id('flight_in')} class={label}>Arrival flight (optional)</label>
+                <input
+                  id={id('flight_in')}
+                  name={id('flight_in')}
+                  maxlength="100"
+                  value={r?.flight_in ?? ''}
+                  placeholder="e.g. A3 612, Larnaca 14:35"
+                  class={field}
+                />
+              </div>
+              <div>
+                <label for={id('flight_out')} class={label}>Departure flight (optional)</label>
+                <input id={id('flight_out')} name={id('flight_out')} maxlength="100" value={r?.flight_out ?? ''} class={field} />
+              </div>
+            </div>
+
+            <div>
+              <label for={id('dietary')} class={label}>Dietary needs or allergies (optional)</label>
+              <textarea id={id('dietary')} name={id('dietary')} maxlength="500" rows="2" class:list={[field, 'py-2']}>{r?.dietary ?? ''}</textarea>
+              <label class="mt-2 flex items-start gap-3">
+                <input type="checkbox" name={id('dietary_consent')} checked={Boolean(r?.dietary_consent_at)} class="mt-1 size-6 shrink-0 accent-sea" />
+                <span>
+                  I agree that the organisers keep this note to plan the food. Only the organisers and my household see it, and
+                  it is deleted after the party.
+                </span>
+              </label>
+            </div>
+          </fieldset>
+        );
+      })
+    }
+    <button type="submit" class="button">Save our reply</button>
+  </form>
 </Layout>

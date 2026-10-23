@@ -1,0 +1,30 @@
+---
+/** Tabs between the organisers' pages. */
+const TABS = [
+  { href: '/admin', label: 'Guest list' },
+  { href: '/admin/rsvps', label: 'Replies' },
+  { href: '/admin/activities', label: 'Activities' },
+];
+const current = Astro.url.pathname.replace(/\/$/, '') || '/';
+---
+
+<nav aria-label="Organiser pages" class="mb-block">
+  <ul class="flex flex-wrap gap-x-6 border-b border-thread">
+    {
+      TABS.map((tab) => (
+        <li>
+          <a
+            href={tab.href}
+            aria-current={current === tab.href ? 'page' : undefined}
+            class:list={[
+              'inline-flex min-h-tap items-center border-b-4 no-underline',
+              current === tab.href ? 'border-clay font-bold text-ink' : 'border-transparent',
+            ]}
+          >
+            {tab.label}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</nav>

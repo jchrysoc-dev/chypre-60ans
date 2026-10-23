@@ -158,6 +158,10 @@ export const activitySchema = strictObject({
     cost_eur: euros('cost_eur'),
     cost_note: text('cost_note', 150).optional(),
     kid_friendly: z.boolean({ error: '"kid_friendly" must be true or false.' }).default(false),
+    /** "cancelled" stops sign-ups and shows the activity as cancelled. Never delete the file instead. */
+    status: z
+      .enum(['scheduled', 'cancelled'], { error: '"status" must be "scheduled" or "cancelled" (or left out).' })
+      .default('scheduled'),
   })
   .superRefine((activity, ctx) => {
     if (activity.end && Date.parse(activity.end) <= Date.parse(activity.start)) {

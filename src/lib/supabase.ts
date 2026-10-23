@@ -22,7 +22,8 @@ export function createVisitorClient({ request, cookies }: { request: Request; co
 
 /**
  * Client with the secret key: bypasses Row-Level Security. Only for creating, changing and
- * deleting logins (auth users) when an organiser edits the guest list. Never for page data.
+ * deleting logins (auth users) when an organiser edits the guest list, and for copying the
+ * activities from the content into the database (src/lib/activities.ts). Never for page data.
  */
 export function createSecretClient() {
   return createClient<Database>(SUPABASE_URL, SUPABASE_SECRET_KEY, {

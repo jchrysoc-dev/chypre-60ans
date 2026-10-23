@@ -42,6 +42,11 @@ export function cyprusDay(isoDateTime: string): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE }).format(new Date(isoDateTime));
 }
 
+/** Any timestamp → "2027-05-27 10:00" in Cyprus time, for spreadsheets. Empty stays empty. */
+export function cyprusDateTime(iso: string | null | undefined): string {
+  return iso ? `${cyprusDay(iso)} ${formatTime(iso)}` : '';
+}
+
 export function formatTimeRange(start: string, end?: string): string {
   return end ? `${formatTime(start)} – ${formatTime(end)}` : formatTime(start);
 }

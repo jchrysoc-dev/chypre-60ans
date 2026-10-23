@@ -77,10 +77,20 @@ If the photo shows people, especially children, the assistant will ask whether y
 **5. Change some wording.**
 > On the Welcome page, replace the first paragraph with: "We can't wait to celebrate with you in Cyprus."
 
-**6. See who has signed up.**
+**6. Cancel an activity.**
+> Cancel the wine tasting.
+
+The activity stays on the website, marked "Cancelled", and nobody can sign up any more. On the **Organisers** page, under **Activities**, you still see who had signed up, so you can let them know.
+
+**7. See who has signed up.**
 > Who has signed up for the boat trip?
 
-The assistant can't see guests' information, on purpose. It will tell you to open the website's **Guest list** page (you'll find the link at the bottom of any page). That page is where you add guests and see who is coming.
+The assistant can't see guests' information, on purpose. It will tell you to open the website's **Organisers** page (you'll find the link at the bottom of any page). There you'll find three tabs:
+- **Guest list**: add guests, change their details, or remove them.
+- **Replies**: who is coming to the party, arrival dates, flights and dietary needs.
+- **Activities**: who is going to each activity and who is waiting for a place. You can sign someone up yourself (for example when they phone you), give someone a place even when it's full, or take someone off.
+
+Each of the last two has a **Download (CSV)** button that opens in Excel or Google Sheets.
 
 ### Taking back a change
 > Undo the last change and publish it.

@@ -63,7 +63,8 @@ Files: `welcome.md`, `thank-you.md`, `privacy.md`.
 | `capacity` | whole number ≥ 1 | no | Leave out for unlimited. When full, new sign-ups join the waiting list. |
 | `cost_eur` | number ≥ 0 | yes | Per person. `0` = free. Information only, no online payment. |
 | `cost_note` | text | no | e.g. "Pay the boat company on the day." |
-| `kid_friendly` | `true` / `false` | no | Defaults to `false`. |
+| `kid_friendly` | `true` / `false` | no | Defaults to `false`. When `false`, children can't be signed up (organisers can still add them in /admin). |
+| `status` | `scheduled` / `cancelled` | no | Defaults to `scheduled`. `cancelled` shows the activity as cancelled and stops sign-ups; organisers still see who had signed up. **To stop an activity, set this. Never delete its file** once guests can sign up. |
 | body | Markdown | no | Extra details (what to bring, etc.). |
 
 ## `content/accommodation/<id>.md`

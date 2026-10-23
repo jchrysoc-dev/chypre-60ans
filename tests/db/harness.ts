@@ -10,6 +10,7 @@ export const users = {
   ben: '00000000-0000-4000-8000-0000000000b1', // Example household
   bea: '00000000-0000-4000-8000-0000000000b2', // Example household
   carl: '00000000-0000-4000-8000-0000000000c1', // Sample household
+  dora: '00000000-0000-4000-8000-0000000000d1', // Demo household
   stranger: '00000000-0000-4000-8000-0000000000ff', // valid login, not on the guest list
 };
 export const people = {
@@ -18,11 +19,13 @@ export const people = {
   bea: '00000000-0000-4000-8000-0000000000bb',
   bobby: '00000000-0000-4000-8000-0000000000bc',
   carl: '00000000-0000-4000-8000-0000000000ca',
+  dora: '00000000-0000-4000-8000-0000000000da',
 };
 export const households = {
   organisers: '00000000-0000-4000-8000-00000000a000',
   example: '00000000-0000-4000-8000-00000000b000',
   sample: '00000000-0000-4000-8000-00000000c000',
+  demo: '00000000-0000-4000-8000-00000000d000',
 };
 
 /** A fresh database with every migration and the fake seed applied. */

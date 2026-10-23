@@ -1,11 +1,19 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { actions } from 'astro:actions';
+import { render } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import PageIntro from '../components/PageIntro.astro';
 import Note from '../components/Note.astro';
+import SignUpForm from '../components/SignUpForm.astro';
+import { ensureActivitiesSynced, getActivities, loadHouseholdView } from '../lib/activities';
 import { cyprusDay, formatDate, formatEuros, formatTime } from '../lib/format';
 
-const activities = (await getCollection('activities')).sort((a, b) => Date.parse(a.data.start) - Date.parse(b.data.start));
+const activities = await getActivities();
+await ensureActivitiesSynced();
+const view = await loadHouseholdView(Astro.locals.supabase, Astro.locals.person!.household_id);
+const saved = Astro.getActionResult(actions.activities.save);
+const outcome = saved?.data ?? (saved?.error ? { activityId: undefined, ok: false, message: saved.error.message } : undefined);
+const nobodyReplied = !view.members.some((m) => m.attending === 'yes' || m.attending === 'maybe');
 
 // Group by Cyprus calendar day, keeping chronological order.
 const days = new Map<string, typeof activities>();
@@ -18,8 +26,14 @@ const rendered = new Map(await Promise.all(activities.map(async (a) => [a.id, (a
 
 <Layout title="Activities" description="The programme for the birthday week, with times, costs and places.">
   <PageIntro title="Activities" lead="The programme for the week. Join as many as you like. All times are Cyprus time." />
-  {/* Sign-up arrives in M3. */}
-  <Note>Signing up opens soon. For now, have a look at what is planned.</Note>
+  {
+    nobodyReplied && (
+      <Note>
+        To sign up for activities, first <a href="/rsvp">reply to the invitation</a> for your household.
+      </Note>
+    )
+  }
+  <div aria-live="polite">{outcome && !outcome.activityId && <p class="note border-clay font-bold">{outcome.message}</p>}</div>
 
   {
     [...days].map(([day, items]) => (
@@ -44,7 +58,15 @@ const rendered = new Map(await Promise.all(activities.map(async (a) => [a.id, (a
                   )}
                 </p>
                 <div class="max-w-measure">
-                  <h3 class="text-subheading leading-snug">{data.title}</h3>
+                  <h3 class="text-subheading leading-snug">
+                    {data.status === 'cancelled' ? (
+                      <>
+                        <s>{data.title}</s> <span class="text-clay">Cancelled</span>
+                      </>
+                    ) : (
+                      data.title
+                    )}
+                  </h3>
                   <p class="mt-1">{data.summary}</p>
                   <dl class="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
                     <dt class="text-ink-soft">Meet at</dt>
@@ -66,6 +88,11 @@ const rendered = new Map(await Promise.all(activities.map(async (a) => [a.id, (a
                   <div class="prose-site mt-3">
                     <Content />
                   </div>
+                  <SignUpForm
+                    activity={activity}
+                    view={view}
+                    outcome={outcome?.activityId === activity.id ? outcome : undefined}
+                  />
                 </div>
               </li>
             );

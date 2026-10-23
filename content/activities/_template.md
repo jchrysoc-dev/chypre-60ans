@@ -31,8 +31,12 @@ cost_eur: 35
 # A short note about the price (optional). Remove the # to use it.
 # cost_note: Pay the boat company on the day.
 
-# Are children welcome? true or false.
+# Are children welcome? true or false. With false, children can't be signed up.
 kid_friendly: true
+
+# To cancel the activity later, remove the # below. Never delete the file instead:
+# guests' sign-ups are tied to it, and Mum still sees who had signed up.
+# status: cancelled
 ---
 
 Anything you write down here is shown under the activity, for example what to bring.

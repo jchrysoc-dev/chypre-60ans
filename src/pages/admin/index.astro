@@ -3,6 +3,7 @@
 import { actions, isInputError } from 'astro:actions';
 import Layout from '../../layouts/Layout.astro';
 import PageIntro from '../../components/PageIntro.astro';
+import AdminNav from '../../components/AdminNav.astro';
 import type { Person } from '../../lib/database.types';
 
 const db = Astro.locals.supabase;
@@ -44,6 +45,7 @@ const describe = (p: Member) =>
     title="Guest list"
     lead={`${households?.length ?? 0} households, ${everyone?.length ?? 0} people, ${canLogIn} of them can log in with their email.`}
   />
+  <AdminNav />
 
   <div aria-live="polite">
     {done && <p class="note">{done}</p>}

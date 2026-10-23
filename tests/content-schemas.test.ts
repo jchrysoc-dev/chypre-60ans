@@ -18,6 +18,13 @@ describe('activitySchema', () => {
     const result = activitySchema.parse(activity);
     expect(result.kid_friendly).toBe(false);
     expect(result.capacity).toBeUndefined();
+    expect(result.status).toBe('scheduled');
+  });
+
+  it('accepts status: cancelled and rejects other statuses, with a readable message', () => {
+    expect(activitySchema.parse({ ...activity, status: 'cancelled' }).status).toBe('cancelled');
+    const result = activitySchema.safeParse({ ...activity, status: 'postponed' });
+    expect(messages(result)).toEqual(['"status" must be "scheduled" or "cancelled" (or left out).']);
   });
 
   it('rejects a time without the Cyprus time-zone offset, with a readable message', () => {

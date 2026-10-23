@@ -84,7 +84,7 @@ const isCurrent = (href: string) => (href === '/' ? current === '/' : current.st
       {current === '/' ? <hr class="border-thread" /> : <LaceBand />}
       <p class="mt-4 flex flex-wrap gap-x-6 gap-y-1">
         {person && <a href="/me" class="inline-flex min-h-tap items-center">My details</a>}
-        {person?.role === 'admin' && <a href="/admin" class="inline-flex min-h-tap items-center">Guest list</a>}
+        {person?.role === 'admin' && <a href="/admin" class="inline-flex min-h-tap items-center">Organisers</a>}
         <a href="/privacy" class="inline-flex min-h-tap items-center">Your privacy</a>
       </p>
       {

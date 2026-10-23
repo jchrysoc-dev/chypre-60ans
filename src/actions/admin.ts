@@ -1,5 +1,6 @@
 import { ActionError, defineAction, type ActionAPIContext } from 'astro:actions';
 import { z } from 'astro/zod';
+import { ensureActivitiesSynced, explain } from '../lib/activities';
 import * as guestList from '../lib/guest-list';
 import { createSecretClient } from '../lib/supabase';
 
@@ -112,6 +113,41 @@ export const admin = {
       const { db, secret } = organiser(context);
       await run(() => guestList.removeHousehold(db, secret, household_id));
       return { message: `${label} was removed from the guest list.` };
+    },
+  }),
+
+  /** Sign anyone up, also after the start; "over capacity" gives a place even when full. */
+  signUpGuest: defineAction({
+    accept: 'form',
+    input: z.object({ activity_id: z.string().regex(/^[a-z0-9-]+$/), person_id: id, over_capacity: z.boolean() }),
+    handler: async ({ activity_id, person_id, over_capacity }, context) => {
+      const { db } = organiser(context);
+      await ensureActivitiesSynced();
+      const { data: status, error } = await db.rpc('sign_up', {
+        p_activity_id: activity_id,
+        p_person_ids: [person_id],
+        p_over_capacity: over_capacity,
+      });
+      if (error) throw new ActionError({ code: 'BAD_REQUEST', message: explain(error).message });
+      const { data: person } = await db.from('people').select('full_name').eq('id', person_id).single();
+      const name = person?.full_name ?? 'This person';
+      const message = {
+        confirmed: `${name} has a place.`,
+        waitlisted: `It's full, so ${name} is on the waiting list. Tick "even if it is full" to give a place anyway.`,
+        unchanged: `${name} was already signed up.`,
+      }[status];
+      return { message };
+    },
+  }),
+
+  removeSignUp: defineAction({
+    accept: 'form',
+    input: z.object({ activity_id: z.string(), person_id: id, full_name: z.string(), confirm: ticked }),
+    handler: async ({ activity_id, person_id, full_name }, context) => {
+      const { db } = organiser(context);
+      const { error } = await db.from('activity_signups').delete().eq('activity_id', activity_id).eq('person_id', person_id);
+      if (error) throw new ActionError({ code: 'BAD_REQUEST', message: explain(error).message });
+      return { message: `${full_name} was taken off this activity. The waiting list moved up if a place was free.` };
     },
   }),
 };

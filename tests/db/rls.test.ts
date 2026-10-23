@@ -106,7 +106,7 @@ describe('an organiser', () => {
       people: (await tx.query('select id from public.people')).rows.length,
       rsvps: (await tx.query('select person_id from public.rsvps')).rows.length,
     }));
-    expect(result).toEqual({ people: 5, rsvps: 2 });
+    expect(result).toEqual({ people: 6, rsvps: 3 });
   });
 
   it('can add a household with people, change an email and remove a person', async () => {
@@ -117,7 +117,7 @@ describe('an organiser', () => {
       await tx.query('delete from public.people where id = $1', [people.bobby]);
       return (await tx.query('select count(*)::int as n from public.people')).rows[0];
     });
-    expect(result).toEqual({ n: 5 });
+    expect(result).toEqual({ n: 6 });
   });
 
   it('cannot create or promote organisers from the website', async () => {

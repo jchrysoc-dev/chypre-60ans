@@ -31,8 +31,8 @@ Requires Node 24+. First-time Supabase setup: [docs/SETUP_SUPABASE.md](docs/SETU
 ```
 content/        editorial content (Markdown + YAML), the only place facts live
 docs/           decisions, content schema, (M5) editing guide for Mum
-src/lib/        content schemas, Supabase clients, guest-list logic
-src/actions/    form handlers (login, guest list)
+src/lib/        content schemas, Supabase clients, guest-list, activity and RSVP logic, CSV
+src/actions/    form handlers (login, guest list, RSVP, activity sign-ups)
 src/middleware.ts  login check on every request; organiser check on /admin
 src/styles/     design tokens (tokens.css): colours, fonts, type scale, spacing
 src/pages/      one file per page; renders content, holds no copy of its own

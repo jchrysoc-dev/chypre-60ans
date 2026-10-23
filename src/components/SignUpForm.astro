@@ -1,0 +1,100 @@
+---
+/**
+ * Who in the visitor's household goes to one activity: a checkbox per person and one
+ * Save button. The database checks everything again (capacity, RSVP, children, start time).
+ */
+import { actions } from 'astro:actions';
+import type { Activity, HouseholdView } from '../lib/activities';
+import { blockedReason, closedReason, people, placesLine } from '../lib/signups';
+
+interface Props {
+  activity: Activity;
+  view: HouseholdView;
+  /** The outcome of saving this activity just now, if it was this one. */
+  outcome?: { ok: boolean; message: string };
+}
+const { activity, view, outcome } = Astro.props;
+const { data } = activity;
+
+const counts = view.counts.get(activity.id) ?? { confirmed: 0, waitlisted: 0 };
+const mine = view.signups.get(activity.id) ?? new Map();
+const ahead = view.ahead.get(activity.id);
+const closed = closedReason({ cancelled: data.status === 'cancelled', start: data.start });
+const formId = `signup-${activity.id}`;
+
+const stateOf = (personId: string) => {
+  const status = mine.get(personId);
+  if (status === 'confirmed') return 'Going';
+  if (status === 'waitlisted') return ahead ? `On the waiting list, ${people(ahead)} ahead` : 'On the waiting list, next in line';
+  return undefined;
+};
+const BLOCKED = { rsvp: 'Reply to the invitation first', 'not-coming': 'Not coming to the party (change the reply)' };
+---
+
+<div class="mt-4 border-t border-thread pt-4">
+  <p class="font-bold">{placesLine(data.capacity, counts.confirmed, counts.waitlisted)}</p>
+
+  {
+    closed ? (
+      <>
+        <p class="mt-1 text-ink-soft">
+          {closed === 'cancelled' ? 'Cancelled, so sign-ups are closed.' : 'This has started, so sign-ups are closed.'}
+        </p>
+        {mine.size > 0 && (
+          <ul class="mt-2">
+            {view.members
+              .filter((m) => mine.has(m.id))
+              .map((m) => (
+                <li>
+                  {m.full_name}: {stateOf(m.id)}
+                </li>
+              ))}
+          </ul>
+        )}
+      </>
+    ) : (
+      <form id={formId} method="POST" action={`${actions.activities.save}#${activity.id}`} class="mt-2">
+        <input type="hidden" name="activity_id" value={activity.id} />
+        <fieldset>
+          <legend class="text-ink-soft">Who is coming from your household?</legend>
+          <ul class="mt-1">
+            {view.members.map((member) => {
+              const signedUp = mine.has(member.id);
+              const blocked = signedUp ? null : blockedReason(member, data);
+              const state = stateOf(member.id);
+              return (
+                <li>
+                  <label class:list={['flex min-h-tap items-center gap-3', blocked && 'text-ink-soft']}>
+                    <input
+                      type="checkbox"
+                      name="person_id"
+                      value={member.id}
+                      checked={signedUp}
+                      disabled={Boolean(blocked)}
+                      class="size-6 shrink-0 accent-sea"
+                    />
+                    <span>
+                      {member.full_name}
+                      {state && <span class:list={['ml-1 font-bold', state === 'Going' ? 'text-olive' : 'text-clay']}>· {state}</span>}
+                      {(blocked === 'rsvp' || blocked === 'not-coming') && (
+                        <span class="ml-1">
+                          · <a href="/rsvp">{BLOCKED[blocked]}</a>
+                        </span>
+                      )}
+                      {blocked === 'child' && <span class="ml-1">· Not for children</span>}
+                    </span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        </fieldset>
+        <button type="submit" class="button mt-3">Save</button>
+      </form>
+    )
+  }
+
+  <div aria-live="polite">
+    {outcome && <p class:list={['note mt-3', !outcome.ok && 'border-clay font-bold']}>{outcome.message}</p>}
+  </div>
+</div>
