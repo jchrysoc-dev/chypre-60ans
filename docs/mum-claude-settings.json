@@ -1,0 +1,49 @@
+{
+  "permissions": {
+    "defaultMode": "dontAsk",
+    "allow": [
+      "Edit(/content/**)",
+      "Edit(/public/photos/**)",
+      "Bash(npm run check)",
+      "Bash(npm run photos)",
+      "Bash(npm run build)",
+      "Bash(npm install)",
+      "Bash(npm ci)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git pull *)",
+      "Bash(git push *)",
+      "Bash(git revert *)"
+    ],
+    "deny": [
+      "Edit(/src/**)",
+      "Edit(/supabase/**)",
+      "Edit(/scripts/**)",
+      "Edit(/tests/**)",
+      "Edit(/.github/**)",
+      "Edit(/.claude/**)",
+      "Edit(/docs/**)",
+      "Edit(/astro.config.mjs)",
+      "Edit(/package.json)",
+      "Edit(/package-lock.json)",
+      "Edit(/tsconfig.json)",
+      "Edit(/vitest.config.ts)",
+      "Edit(/.gitignore)",
+      "Edit(/CLAUDE.md)",
+      "Edit(/AGENTS.md)",
+      "Edit(/README.md)",
+      "Read(.env*)",
+      "Read(!.env.example)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * --force*)",
+      "Bash(git push * -f*)",
+      "Bash(git reset --hard *)",
+      "Bash(rm -rf *)",
+      "Bash(rm -fr *)"
+    ]
+  }
+}

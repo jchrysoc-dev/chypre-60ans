@@ -2,6 +2,54 @@
 
 > Also used as `AGENTS.md` for Codex. Keep both files identical (or make AGENTS.md a symlink to this file).
 
+## Part A: Working with Mum (read this first if you are helping Mum)
+
+**Who you are talking to:** assume it is Mum unless the person says they are Jacques (the developer). If it is Jacques, skip Part A and follow Part B (the developer brief, from §0 onwards).
+
+You are helping Jacques's mother edit her 60th birthday website. She is **not technical**. She asks in plain English ("add a sunset cruise on 30 May at 18:00, max 20 people") and you make the change for her.
+
+**How to talk to her**
+- Simple, friendly English. No jargon: say "the website", not "the repo"; "save and publish", not "commit and push"; "a problem in the file", not "a schema error".
+- One step at a time. Never show her a long list of choices or commands.
+- After every change, say in plain words **what changed** and **where she will see it** ("I added the sunset cruise on Sunday 30 May. You'll find it on the Activities page.").
+
+**What you may change**
+- Only files in `content/` and photos in `public/photos/` (her own original photos go in `content/photos/originals/`).
+- Anything in `src/`, `supabase/`, `scripts/`, `tests/`, `.github/`, anything about logging in, any `.env` file, `package.json`, or any configuration file: **stop, explain in one sentence why you can't, and tell her to ask Jacques.** Do not look for a way around it.
+- Never ask her for passwords or keys. Never read, create or edit `.env` files.
+
+**How to add or change things**
+- For a new item, copy the template in its folder (`content/activities/_template.md`, `content/accommodation/_template.md`, `content/cyprus/_template.md`, `content/photos/_template.yaml`), and fill it in. The comments in each template explain every field.
+- Event facts (date, time, venue, dress code) live **only** in `content/event.yaml`. Never repeat them in another file.
+- Never rename an activity file: guests' sign-ups are tied to its file name.
+- To add a photo of her own: put the picture in `content/photos/originals/`, copy `content/photos/_template.yaml`, run `npm run photos`, then run `npm run check`.
+
+**Never delete without her clear yes**
+- Before removing any content file, or anything about guests, ask in plain words ("I'll remove the wine tasting for everyone. Is that OK?") and wait for a clear "yes".
+
+**Privacy**
+- Never put guests' names, emails or phone numbers in `content/`.
+- The website's files are **public on the internet**. Before adding a photo of identifiable people (especially children) or an exact home address, ask her whether she is happy for it to be public.
+
+**Before publishing**
+- Run `git pull` first, then `npm run check`.
+- If the check fails, fix it, or explain the problem in plain words and ask her what she'd like. **Never publish a failing check.**
+
+**Publishing**
+- Publishing means: commit with a clear message ("Add sunset cruise on 30 May") and push to `main`. Vercel then updates the website automatically.
+- Tell her: "It will be live in about 1 to 2 minutes. Refresh the website to see it."
+- If it still hasn't changed after 5 minutes, say so and tell her to message Jacques.
+
+**Guest information** (who has signed up, who is coming, who joined which activity, dietary needs) lives in a database, managed on the website's **/admin** page. You cannot see it and must not try. Tell her to open /admin.
+
+**If she says something looks wrong:** offer to undo the last change (a revert), run `npm run check`, and publish it. If the website is still wrong, tell her to message Jacques.
+
+More for her: `docs/EDITING_GUIDE_FOR_MUM.md`. Field-by-field help: `docs/CONTENT_SCHEMA.md`.
+
+---
+
+## Part B: Developer brief (for Jacques's sessions)
+
 ## 0. How to work on this project — READ FIRST
 
 1. **Start in plan mode.** Do not write, scaffold or install anything until the plan in §7 has been reviewed and explicitly approved by Jacques.
@@ -39,7 +87,7 @@
    - a schema doc in `docs/CONTENT_SCHEMA.md` describing every content file and field;
    - an `llms.txt` (and `llms-full.txt`) generated at build time summarising the public-to-guests content, served **behind login** like the rest of the site;
    - semantic HTML and schema.org `Event` JSON-LD on the welcome page.
-3. **Editing by Mum must not require Git knowledge.** Whatever editing route is chosen (see §6), she edits through a friendly UI; changes go live automatically.
+3. **Editing by Mum must not require Git knowledge.** She edits by asking an AI agent in plain English (VS Code + Claude Code, see Part A); the agent handles Git, runs `npm run check`, and publishes. Changes go live automatically.
 4. **Privacy first (GDPR applies — guests are EU residents and the event is in Cyprus).**
    - Participant contact details are **opt-in per person**, visible **only to logged-in guests**, and each guest can hide/edit their own entry at any time.
    - No personal data in the repo, in `llms.txt`, in logs, or in URLs.
@@ -53,7 +101,7 @@
 | Framework | **Astro** (with content collections) or **Next.js** (App Router) | Content-as-files, typed schemas, fast static pages |
 | Auth | **Supabase Auth, magic-link email** (no passwords); access restricted to an invite list | Easiest for older guests; per-person login as requested |
 | Data (registrations, participant profiles) | **Supabase Postgres** with Row-Level Security | Guests can only edit their own rows |
-| Editorial content editing for Mum | Git-backed CMS (e.g. Keystatic, Decap, TinaCMS, Pages CMS) **or** an in-app `/admin` area | See open question in §6 |
+| Editorial content editing for Mum | An agent (Claude Code in VS Code) edits `content/` files, runs `npm run check`, pushes to `main` | Decided 2026-10-23, see `docs/DECISIONS.md` |
 | Hosting | **Vercel** (Jacques has an account) | Auto-deploy on content change |
 | Styling | Tailwind, warm Mediterranean palette, large readable type, mobile-first | Audience is 50+ and on phones |
 | Admin | `/admin` for Mum: guest list/invites, activity headcounts, CSV export | She needs to see who's coming to what |
@@ -93,10 +141,9 @@ CLAUDE.md / AGENTS.md
 - Who creates accounts: Mum pre-loads an invite list, or guests self-register and Mum approves?
 - Can a household share one login, or is it one login per person?
 
-**Editing**
-- What does Mum already know how to use (Google Docs/Sheets, WordPress, Notion, Canva)? This decides the editing route.
-- Which parts must she edit: all text, photos, activities, the guest list?
-- Does she need to send announcements/emails to all guests from the site?
+**Editing** (settled 2026-10-23, see `docs/DECISIONS.md` "Editing: agent route")
+- Mum edits through an agent (VS Code + Claude Code). Content and photos only; guest data stays on `/admin`.
+- No announcements or emails from the site.
 
 **Participants page**
 - Which fields are shown (name, email, phone, WhatsApp, city, photo, "staying at", short bio)? 
@@ -120,7 +167,7 @@ CLAUDE.md / AGENTS.md
    - M2 auth + invite list + protected routes
    - M3 activity registration + admin headcounts/CSV export
    - M4 participants directory with opt-in
-   - M5 Mum's editing route + `EDITING_GUIDE_FOR_MUM.md`
+   - M5 Mum's agent workflow: `_template` files, `npm run check`, guard-rail settings, `EDITING_GUIDE_FOR_MUM.md`, dry run from a fresh clone
    - M6 `llms.txt`, JSON-LD, accessibility & mobile pass, deploy
 7. Risks and open questions.
 
@@ -137,7 +184,9 @@ CLAUDE.md / AGENTS.md
 Stack: Astro (server output, Vercel adapter) + Tailwind + Supabase + Vitest/PGlite. Details in `README.md`; Supabase setup in `docs/SETUP_SUPABASE.md`.
 
 - `npm run dev`: local site at http://localhost:4321
-- `npm run build`: type-check, validate content, build. **Run before declaring any change done.**
+- `npm run build`: validate content, type-check, build. **Run before declaring any change done.**
+- `npm run check`: the one command for content editors. Validates content and builds, in plain English. Works without any secrets.
+- `npm run photos`: resize and compress photos listed in `content/photos/` into `public/photos/`.
 - `npm test`: tests (schemas, formatting, contrast, RLS on PGlite)
 - `node --env-file=.env.local scripts/add-admin.ts --email … --name "…"`: add an organiser
 
