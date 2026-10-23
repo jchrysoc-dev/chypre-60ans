@@ -1,8 +1,8 @@
 /**
  * Schemas for every file in /content.
  *
- * Shared by the Astro build (src/content.config.ts), the tests, and (from M5)
- * the Google Sheets sync, so a file that passes one passes all of them.
+ * Shared by the Astro build (src/content.config.ts), the tests and
+ * scripts/check-content.ts, so a file that passes one passes all of them.
  * Error messages are written for a non-technical reader. They are what Mum or
  * Jacques see when a file is wrong. Field-by-field docs: docs/CONTENT_SCHEMA.md
  */
