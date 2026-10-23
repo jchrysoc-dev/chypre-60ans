@@ -1,0 +1,55 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../layouts/Layout.astro';
+import PageIntro from '../components/PageIntro.astro';
+import ComingSoon from '../components/ComingSoon.astro';
+import { formatEuros } from '../lib/format';
+
+const places = (await getCollection('accommodation')).sort(
+  (a, b) => (a.data.distance_to_venue_km ?? Infinity) - (b.data.distance_to_venue_km ?? Infinity),
+);
+const rendered = new Map(await Promise.all(places.map(async (p) => [p.id, (await render(p)).Content] as const)));
+const kindLabel = { hotel: 'Hotel', villa: 'Villa', apartment: 'Apartments', guesthouse: 'Guesthouse', other: 'Other' };
+---
+
+<Layout title="Accommodation" description="Suggested places to stay. Guests book themselves.">
+  <PageIntro title="Accommodation" lead="Some suggestions near the party. Please book directly; prices are per night." />
+  <ComingSoon milestone="M4">You will be able to tell everyone where you are staying, to help with car-sharing.</ComingSoon>
+
+  <ul class="mt-8 space-y-4">
+    {
+      places.map((place) => {
+        const { data } = place;
+        const Content = rendered.get(place.id)!;
+        return (
+          <li class="card" id={place.id}>
+            <p class="font-semibold text-olive">{kindLabel[data.kind]} · {data.area}</p>
+            <h2 class="mt-1 text-2xl font-semibold">{data.name}</h2>
+            <p class="mt-2">{data.summary}</p>
+            <dl class="mt-4 grid gap-x-6 gap-y-2 sm:grid-cols-[max-content_1fr]">
+              <dt class="font-semibold text-ink-soft">Price per night</dt>
+              <dd>
+                {formatEuros(data.price_eur_per_night.min)} – {formatEuros(data.price_eur_per_night.max)}
+              </dd>
+              {data.distance_to_venue_km !== undefined && (
+                <>
+                  <dt class="font-semibold text-ink-soft">To the party</dt>
+                  <dd>{data.distance_to_venue_km} km</dd>
+                </>
+              )}
+            </dl>
+            <div class="prose-site mt-4">
+              <Content />
+            </div>
+            {data.booking_url && (
+              <a href={data.booking_url} class="button mt-4" rel="noopener" target="_blank">
+                Booking website
+                <span class="sr-only">for {data.name} (opens in a new tab)</span>
+              </a>
+            )}
+          </li>
+        );
+      })
+    }
+  </ul>
+</Layout>

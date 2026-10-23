@@ -1,0 +1,22 @@
+# The ONE place for event facts. Every page reads from here; never repeat these facts elsewhere.
+# "TBD" = not decided yet (pages show "To be confirmed"). Field docs: docs/CONTENT_SCHEMA.md
+title: "A 60th birthday in Cyprus"
+honoree_display_name: TBD
+timezone: Europe/Nicosia
+currency: EUR
+week:
+  start_date: TBD
+  end_date: TBD
+party:
+  date: "2027-05-29"
+  start: TBD
+  end: TBD
+  dress_code: TBD
+venue:
+  name: TBD
+  address: TBD
+  town: TBD
+  country: Cyprus
+  gps: TBD
+  maps_url: TBD
+contact_note: "Questions? Message the organisers on the WhatsApp group (link on the Participants page)."

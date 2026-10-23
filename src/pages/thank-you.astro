@@ -1,0 +1,13 @@
+---
+import { getEntry, render } from 'astro:content';
+import Layout from '../layouts/Layout.astro';
+import PageIntro from '../components/PageIntro.astro';
+
+const page = (await getEntry('pages', 'thank-you'))!;
+const { Content } = await render(page);
+---
+
+<Layout title={page.data.title} description={page.data.summary}>
+  <PageIntro title={page.data.title} />
+  <div class="prose-site"><Content /></div>
+</Layout>

@@ -1,0 +1,19 @@
+---
+import { getEntry, render } from 'astro:content';
+import Layout from '../layouts/Layout.astro';
+import EventFacts from '../components/EventFacts.astro';
+
+const welcome = (await getEntry('pages', 'welcome'))!;
+const { data: event } = (await getEntry('event', 'event'))!;
+const { Content } = await render(welcome);
+---
+
+<Layout title={event.title} description={welcome.data.summary}>
+  <h1 class="text-4xl font-semibold sm:text-5xl">{event.title}</h1>
+  <div class="prose-site mt-6"><Content /></div>
+  <div class="mt-6 flex flex-wrap gap-3">
+    <a href="/rsvp" class="button">Reply to the invitation</a>
+    <a href="/activities" class="button-secondary">See the activities</a>
+  </div>
+  <div class="mt-10"><EventFacts /></div>
+</Layout>

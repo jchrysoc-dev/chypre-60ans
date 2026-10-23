@@ -1,0 +1,25 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import PageIntro from '../../components/PageIntro.astro';
+
+const resources = (await getCollection('cyprus')).sort((a, b) => a.data.order - b.data.order);
+---
+
+<Layout title="Cyprus" description="Practical information for visiting Cyprus.">
+  <PageIntro title="Cyprus" lead="Everything practical for your trip." />
+  <ul class="grid gap-4 sm:grid-cols-2">
+    {
+      resources.map((resource) => (
+        <li class="card">
+          <h2 class="text-2xl font-semibold">
+            <a href={`/cyprus/${resource.id}`} class="text-ink no-underline hover:underline">
+              {resource.data.title}
+            </a>
+          </h2>
+          <p class="mt-2">{resource.data.summary}</p>
+        </li>
+      ))
+    }
+  </ul>
+</Layout>

@@ -1,0 +1,69 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+@import '@fontsource-variable/lora';
+@import '@fontsource-variable/source-sans-3';
+
+/* Warm Mediterranean palette. Every text/background pair used is WCAG AA (checked in tests/contrast.test.ts). */
+@theme {
+  --color-cream: #fbf6ee;
+  --color-sand: #f1e6d4;
+  --color-ink: #2a2622;
+  --color-ink-soft: #574f47;
+  --color-sea: #1d5b85;
+  --color-sea-dark: #154466;
+  --color-terracotta: #a9481f;
+  --color-olive: #5b672c;
+
+  --font-serif: 'Lora Variable', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Source Sans 3 Variable', 'Segoe UI', system-ui, sans-serif;
+}
+
+@layer base {
+  /* Base size 18px (1.125rem) for a 50+ audience; scales with the user's browser setting. */
+  html {
+    font-size: 112.5%;
+  }
+  body {
+    @apply bg-cream font-sans text-ink leading-relaxed;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-serif text-ink;
+  }
+  a {
+    @apply text-sea underline underline-offset-4 decoration-2;
+  }
+  a:hover {
+    @apply text-sea-dark;
+  }
+  :focus-visible {
+    @apply outline-3 outline-offset-2 outline-terracotta;
+  }
+}
+
+@layer components {
+  .prose-site {
+    @apply prose prose-lg max-w-none;
+    --tw-prose-body: var(--color-ink);
+    --tw-prose-headings: var(--color-ink);
+    --tw-prose-links: var(--color-sea);
+    --tw-prose-bold: var(--color-ink);
+    --tw-prose-bullets: var(--color-terracotta);
+  }
+  .card {
+    @apply rounded-2xl bg-white p-5 shadow-sm ring-1 ring-sand sm:p-6;
+  }
+  .button {
+    @apply inline-flex min-h-12 items-center justify-center rounded-full bg-sea px-6 py-3 font-semibold text-white no-underline;
+  }
+  .button:hover {
+    @apply bg-sea-dark text-white;
+  }
+  .button-secondary {
+    @apply inline-flex min-h-12 items-center justify-center rounded-full bg-white px-6 py-3 font-semibold text-sea no-underline ring-2 ring-sea;
+  }
+  .placeholder-note {
+    @apply rounded-xl border-2 border-dashed border-olive bg-sand p-4 text-ink;
+  }
+}

@@ -1,0 +1,37 @@
+---
+/** Key party facts, always read from content/event.yaml (the single source of truth). */
+import { getEntry } from 'astro:content';
+import { formatDate, formatTimeRange, orTbd, isTbd, TO_BE_CONFIRMED } from '../lib/format';
+
+const { data: event } = (await getEntry('event', 'event'))!;
+const { party, venue, week } = event;
+
+const time =
+  isTbd(party.start) ? TO_BE_CONFIRMED : formatTimeRange(party.start, isTbd(party.end) ? undefined : party.end);
+const place = [venue.name, venue.town].filter((part) => !isTbd(part)).join(', ') || TO_BE_CONFIRMED;
+const weekText =
+  isTbd(week.start_date) || isTbd(week.end_date)
+    ? TO_BE_CONFIRMED
+    : `${formatDate(week.start_date)} to ${formatDate(week.end_date)}`;
+---
+
+<section aria-labelledby="facts-heading" class="card">
+  <h2 id="facts-heading" class="text-2xl font-semibold">The party</h2>
+  <dl class="mt-4 grid gap-x-6 gap-y-3 sm:grid-cols-[max-content_1fr]">
+    <dt class="font-semibold text-ink-soft">Date</dt>
+    <dd><time datetime={party.date}>{formatDate(party.date)}</time></dd>
+    <dt class="font-semibold text-ink-soft">Time</dt>
+    <dd>{time}{!isTbd(party.start) && <span class="text-ink-soft"> (Cyprus time)</span>}</dd>
+    <dt class="font-semibold text-ink-soft">Place</dt>
+    <dd>
+      {place}
+      {!isTbd(venue.address) && <span class="block text-ink-soft">{venue.address}</span>}
+      {!isTbd(venue.maps_url) && <a href={venue.maps_url} class="block">Open in maps</a>}
+    </dd>
+    <dt class="font-semibold text-ink-soft">Dress code</dt>
+    <dd>{orTbd(party.dress_code, (value) => value)}</dd>
+    <dt class="font-semibold text-ink-soft">The week</dt>
+    <dd>{weekText}</dd>
+  </dl>
+  <p class="mt-4 text-ink-soft">{event.contact_note}</p>
+</section>

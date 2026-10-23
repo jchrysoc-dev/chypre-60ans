@@ -1,0 +1,75 @@
+---
+import { getEntry } from 'astro:content';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description } = Astro.props;
+const event = await getEntry('event', 'event');
+const siteTitle = event!.data.title;
+
+const nav = [
+  { href: '/', label: 'Welcome' },
+  { href: '/rsvp', label: 'RSVP' },
+  { href: '/activities', label: 'Activities' },
+  { href: '/accommodation', label: 'Accommodation' },
+  { href: '/participants', label: 'Participants' },
+  { href: '/cyprus', label: 'Cyprus' },
+];
+const current = Astro.url.pathname.replace(/\/$/, '') || '/';
+const isCurrent = (href: string) => (href === '/' ? current === '/' : current.startsWith(href));
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    {description && <meta name="description" content={description} />}
+    <title>{title === siteTitle ? siteTitle : `${title} · ${siteTitle}`}</title>
+    <slot name="head" />
+  </head>
+  <body class="min-h-screen">
+    <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 button">Skip to content</a>
+    <header class="border-b border-sand bg-white">
+      <div class="mx-auto max-w-4xl px-4 py-4">
+        <a href="/" class="font-serif text-2xl font-semibold text-ink no-underline">{siteTitle}</a>
+        <nav aria-label="Main" class="mt-3">
+          <ul class="flex flex-wrap gap-2">
+            {
+              nav.map((item) => (
+                <li>
+                  <a
+                    href={item.href}
+                    aria-current={isCurrent(item.href) ? 'page' : undefined}
+                    class:list={[
+                      'inline-flex min-h-11 items-center rounded-full px-4 font-semibold no-underline',
+                      isCurrent(item.href) ? 'bg-sea text-white hover:text-white' : 'bg-sand text-ink hover:text-sea-dark',
+                    ]}
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="mx-auto max-w-4xl px-4 py-8 sm:py-10">
+      <slot />
+    </main>
+
+    <footer class="mx-auto max-w-4xl px-4 pb-10 text-ink-soft">
+      <p class="flex flex-wrap gap-x-6 gap-y-2 border-t border-sand pt-6">
+        <a href="/me">My details</a>
+        <a href="/privacy">Your privacy</a>
+      </p>
+    </footer>
+  </body>
+</html>
