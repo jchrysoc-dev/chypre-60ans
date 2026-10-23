@@ -36,6 +36,7 @@ You are helping Jacques's mother edit her 60th birthday website. She is **not te
 - If the check fails, fix it, or explain the problem in plain words and ask her what she'd like. **Never publish a failing check.**
 
 **Publishing**
+- First tell her in plain words what you changed and ask: "Shall I publish this now?" Publish only after a clear yes.
 - Publishing means: commit with a clear message ("Add sunset cruise on 30 May") and push to `main`. Vercel then updates the website automatically.
 - Tell her: "It will be live in about 1 to 2 minutes. Refresh the website to see it."
 - If it still hasn't changed after 5 minutes, say so and tell her to message Jacques.
