@@ -1,10 +1,187 @@
 ---
+/** The guest list, for organisers only (the middleware and every action check this). */
+import { actions, isInputError } from 'astro:actions';
 import Layout from '../../layouts/Layout.astro';
 import PageIntro from '../../components/PageIntro.astro';
-import ComingSoon from '../../components/ComingSoon.astro';
+import type { Person } from '../../lib/database.types';
+
+const db = Astro.locals.supabase;
+
+// Show the outcome of whichever form was just submitted.
+const results = [
+  actions.admin.addHousehold,
+  actions.admin.addPerson,
+  actions.admin.updatePerson,
+  actions.admin.removePerson,
+  actions.admin.removeHousehold,
+].map((action) => Astro.getActionResult(action));
+const done = results.find((r) => r?.data)?.data?.message;
+const failed = results.find((r) => r?.error)?.error;
+const failure = failed
+  ? isInputError(failed)
+    ? Object.values(failed.fields).flat().filter(Boolean).join(' ')
+    : failed.message
+  : undefined;
+
+const [{ data: households = [] }, { data: everyone = [] }] = await Promise.all([
+  db.from('households').select('id, label').order('label'),
+  db.from('people').select('id, household_id, full_name, email, is_child, role, auth_user_id').order('full_name'),
+]);
+const membersOf = (householdId: string) => (everyone ?? []).filter((p) => p.household_id === householdId);
+const canLogIn = (everyone ?? []).filter((p) => p.email).length;
+
+const field = 'mt-1 block min-h-12 w-full rounded-md border border-ink-soft bg-paper px-3';
+const label = 'block font-bold';
+const ROWS = 6;
+
+type Member = Pick<Person, 'id' | 'full_name' | 'email' | 'is_child' | 'role' | 'auth_user_id'>;
+const describe = (p: Member) =>
+  [p.is_child ? 'Child' : 'Adult', p.role === 'admin' ? 'organiser' : undefined].filter(Boolean).join(', ');
 ---
 
-<Layout title="Organisers">
-  <PageIntro title="Organisers" lead="Guest list, replies and activity headcounts." />
-  <ComingSoon milestone="M2–M3">For Mum and Jacques only: manage invitations, see replies and headcounts, and download lists.</ComingSoon>
+<Layout title="Guest list">
+  <PageIntro
+    title="Guest list"
+    lead={`${households?.length ?? 0} households, ${everyone?.length ?? 0} people, ${canLogIn} of them can log in with their email.`}
+  />
+
+  <div aria-live="polite">
+    {done && <p class="note">{done}</p>}
+    {failure && <p class="note border-clay font-bold">{failure}</p>}
+  </div>
+
+  <section aria-labelledby="add-heading" class="mt-10 max-w-[38rem]">
+    <h2 id="add-heading" class="text-[2rem]">Add a household</h2>
+    <p class="mt-2 text-ink-soft">
+      A household is a couple, a family or a single guest who reply together. People with an email address can log
+      in. Children without email can be signed up by their parents.
+    </p>
+    <form method="POST" action={actions.admin.addHousehold} class="mt-5 space-y-6">
+      <div>
+        <label for="label" class={label}>Household name</label>
+        <input id="label" name="label" required maxlength="100" placeholder="For example: Anna and Marc Dupont" class={field} />
+      </div>
+      <fieldset class="space-y-5">
+        <legend class="font-bold">People (leave unused rows empty)</legend>
+        {
+          Array.from({ length: ROWS }, (_, i) => (
+            <div class="grid gap-3 border-t border-thread pt-4 sm:grid-cols-[1fr_1fr_8rem]">
+              <div>
+                <label for={`name-${i}`} class="text-ink-soft">Name</label>
+                <input id={`name-${i}`} name="full_name" maxlength="100" class={field} />
+              </div>
+              <div>
+                <label for={`email-${i}`} class="text-ink-soft">Email (optional)</label>
+                <input id={`email-${i}`} name="email" type="email" autocapitalize="none" spellcheck="false" class={field} />
+              </div>
+              <div>
+                <label for={`kind-${i}`} class="text-ink-soft">Age</label>
+                <select id={`kind-${i}`} name="kind" class={field}>
+                  <option value="adult">Adult</option>
+                  <option value="child">Child</option>
+                </select>
+              </div>
+            </div>
+          ))
+        }
+      </fieldset>
+      <button type="submit" class="button">Add household</button>
+    </form>
+  </section>
+
+  <section aria-labelledby="list-heading" class="mt-14">
+    <h2 id="list-heading" class="text-[2rem]">Everyone invited</h2>
+    {(households?.length ?? 0) === 0 && <p class="mt-3">Nobody yet. Add the first household above.</p>}
+    <ul class="ruled mt-4 border-y border-thread">
+      {
+        households?.map((household) => {
+          const members = membersOf(household.id);
+          const hasOrganiser = members.some((m) => m.role === 'admin');
+          return (
+            <li class="py-6">
+              <h3 class="text-[1.35rem]">{household.label}</h3>
+              <ul class="mt-3 space-y-3">
+                {members.map((person) => (
+                  <li class="max-w-[38rem]">
+                    <p>
+                      <span class="font-bold">{person.full_name}</span>
+                      <span class="text-ink-soft"> ({describe(person)})</span>
+                    </p>
+                    <p class="text-ink-soft">{person.email ?? 'No email, cannot log in'}</p>
+                    <details class="mt-1">
+                      <summary class="inline-flex min-h-12 cursor-pointer items-center text-sea underline underline-offset-[0.2em]">
+                        Change or remove {person.full_name}
+                      </summary>
+                      <form method="POST" action={actions.admin.updatePerson} class="mt-2 space-y-3 bg-paper p-4">
+                        <input type="hidden" name="person_id" value={person.id} />
+                        <div>
+                          <label for={`edit-name-${person.id}`} class={label}>Name</label>
+                          <input id={`edit-name-${person.id}`} name="full_name" required value={person.full_name} class={field} />
+                        </div>
+                        <div>
+                          <label for={`edit-email-${person.id}`} class={label}>Email (leave empty if they will not log in)</label>
+                          <input id={`edit-email-${person.id}`} name="email" type="email" value={person.email ?? ''} class={field} />
+                        </div>
+                        <label class="flex min-h-12 items-center gap-3">
+                          <input type="checkbox" name="is_child" checked={person.is_child} class="size-6" /> Child
+                        </label>
+                        <button type="submit" class="button">Save changes</button>
+                      </form>
+                      {person.role !== 'admin' && (
+                        <form method="POST" action={actions.admin.removePerson} class="mt-3 bg-paper p-4">
+                          <input type="hidden" name="person_id" value={person.id} />
+                          <input type="hidden" name="full_name" value={person.full_name} />
+                          <label class="flex min-h-12 items-center gap-3">
+                            <input type="checkbox" name="confirm" value="true" required class="size-6" />
+                            Yes, remove {person.full_name} and their replies
+                          </label>
+                          <button type="submit" class="button-quiet mt-2">Remove {person.full_name}</button>
+                        </form>
+                      )}
+                    </details>
+                  </li>
+                ))}
+              </ul>
+              <details class="mt-3 max-w-[38rem]">
+                <summary class="inline-flex min-h-12 cursor-pointer items-center text-sea underline underline-offset-[0.2em]">
+                  Add someone to {household.label}
+                </summary>
+                <form method="POST" action={actions.admin.addPerson} class="mt-2 space-y-3 bg-paper p-4">
+                  <input type="hidden" name="household_id" value={household.id} />
+                  <div>
+                    <label for={`add-name-${household.id}`} class={label}>Name</label>
+                    <input id={`add-name-${household.id}`} name="full_name" required class={field} />
+                  </div>
+                  <div>
+                    <label for={`add-email-${household.id}`} class={label}>Email (optional)</label>
+                    <input id={`add-email-${household.id}`} name="email" type="email" class={field} />
+                  </div>
+                  <label class="flex min-h-12 items-center gap-3">
+                    <input type="checkbox" name="is_child" class="size-6" /> Child
+                  </label>
+                  <button type="submit" class="button">Add person</button>
+                </form>
+              </details>
+              {!hasOrganiser && (
+                <details class="mt-1 max-w-[38rem]">
+                  <summary class="inline-flex min-h-12 cursor-pointer items-center text-sea underline underline-offset-[0.2em]">
+                    Remove the whole household
+                  </summary>
+                  <form method="POST" action={actions.admin.removeHousehold} class="mt-2 bg-paper p-4">
+                    <input type="hidden" name="household_id" value={household.id} />
+                    <input type="hidden" name="label" value={household.label} />
+                    <label class="flex min-h-12 items-center gap-3">
+                      <input type="checkbox" name="confirm" value="true" required class="size-6" />
+                      Yes, remove {household.label}, everyone in it and their replies
+                    </label>
+                    <button type="submit" class="button-quiet mt-2">Remove household</button>
+                  </form>
+                </details>
+              )}
+            </li>
+          );
+        })
+      }
+    </ul>
+  </section>
 </Layout>

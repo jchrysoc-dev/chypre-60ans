@@ -2,8 +2,8 @@
 import { getCollection, render } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import PageIntro from '../components/PageIntro.astro';
-import ComingSoon from '../components/ComingSoon.astro';
-import { cyprusDay, formatDate, formatEuros, formatTimeRange } from '../lib/format';
+import Note from '../components/Note.astro';
+import { cyprusDay, formatDate, formatEuros, formatTime } from '../lib/format';
 
 const activities = (await getCollection('activities')).sort((a, b) => Date.parse(a.data.start) - Date.parse(b.data.start));
 
@@ -16,52 +16,61 @@ for (const activity of activities) {
 const rendered = new Map(await Promise.all(activities.map(async (a) => [a.id, (await render(a)).Content] as const)));
 ---
 
-<Layout title="Activities" description="Activities during the birthday week, with times, costs and places.">
-  <PageIntro title="Activities" lead="Join as many as you like. All times are Cyprus time." />
-  <ComingSoon milestone="M3">Signing up for activities will work here once logins are switched on.</ComingSoon>
+<Layout title="Activities" description="The programme for the birthday week, with times, costs and places.">
+  <PageIntro title="Activities" lead="The programme for the week. Join as many as you like. All times are Cyprus time." />
+  {/* Sign-up arrives in M3. */}
+  <Note>Signing up opens soon. For now, have a look at what is planned.</Note>
 
   {
     [...days].map(([day, items]) => (
-      <section class="mt-10" aria-labelledby={`day-${day}`}>
-        <h2 id={`day-${day}`} class="text-2xl font-semibold">
+      <section class="mt-12" aria-labelledby={`day-${day}`}>
+        <h2 id={`day-${day}`} class="text-[2rem]">
           <time datetime={day}>{formatDate(day)}</time>
         </h2>
-        <ul class="mt-4 space-y-4">
+        <ol class="ruled mt-4 border-y border-thread">
           {items.map((activity) => {
             const { data } = activity;
             const Content = rendered.get(activity.id)!;
             return (
-              <li class="card" id={activity.id}>
-                <p class="font-semibold text-terracotta">
-                  <time datetime={data.start}>{formatTimeRange(data.start, data.end)}</time>
-                </p>
-                <h3 class="mt-1 text-2xl font-semibold">{data.title}</h3>
-                <p class="mt-2">{data.summary}</p>
-                <dl class="mt-4 grid gap-x-6 gap-y-2 sm:grid-cols-[max-content_1fr]">
-                  <dt class="font-semibold text-ink-soft">Meeting point</dt>
-                  <dd>{data.meeting_point}</dd>
-                  <dt class="font-semibold text-ink-soft">Cost</dt>
-                  <dd>
-                    {formatEuros(data.cost_eur)}
-                    {data.cost_eur > 0 && ' per person'}
-                    {data.cost_note && <span class="block text-ink-soft">{data.cost_note}</span>}
-                  </dd>
-                  <dt class="font-semibold text-ink-soft">Places</dt>
-                  <dd>{data.capacity ? `Up to ${data.capacity} people (waiting list when full)` : 'No limit'}</dd>
-                  {data.kid_friendly && (
-                    <>
-                      <dt class="font-semibold text-ink-soft">Children</dt>
-                      <dd>Suitable for children</dd>
-                    </>
+              <li id={activity.id} class="grid gap-x-8 gap-y-1 py-6 sm:grid-cols-[7rem_1fr]">
+                <p>
+                  <time datetime={data.start} class="font-display text-[1.75rem] leading-none text-clay">
+                    {formatTime(data.start)}
+                  </time>
+                  {data.end && (
+                    <span class="mt-1 block text-ink-soft max-sm:ml-3 max-sm:inline">
+                      until <time datetime={data.end}>{formatTime(data.end)}</time>
+                    </span>
                   )}
-                </dl>
-                <div class="prose-site mt-4">
-                  <Content />
+                </p>
+                <div class="max-w-[36rem]">
+                  <h3 class="text-[1.35rem] leading-snug">{data.title}</h3>
+                  <p class="mt-1">{data.summary}</p>
+                  <dl class="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
+                    <dt class="text-ink-soft">Meet at</dt>
+                    <dd>{data.meeting_point}</dd>
+                    <dt class="text-ink-soft">Cost</dt>
+                    <dd>
+                      {data.cost_eur > 0 ? `${formatEuros(data.cost_eur)} per person` : 'Free'}
+                      {data.cost_note && <span class="block text-ink-soft">{data.cost_note}</span>}
+                    </dd>
+                    <dt class="text-ink-soft">Places</dt>
+                    <dd>{data.capacity ? `${data.capacity}, then a waiting list` : 'No limit'}</dd>
+                    {data.kid_friendly && (
+                      <>
+                        <dt class="text-ink-soft">Children</dt>
+                        <dd>Welcome</dd>
+                      </>
+                    )}
+                  </dl>
+                  <div class="prose-site mt-3">
+                    <Content />
+                  </div>
                 </div>
               </li>
             );
           })}
-        </ul>
+        </ol>
       </section>
     ))
   }

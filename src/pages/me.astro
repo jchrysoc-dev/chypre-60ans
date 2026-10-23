@@ -1,10 +1,10 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import PageIntro from '../components/PageIntro.astro';
-import ComingSoon from '../components/ComingSoon.astro';
+import Note from '../components/Note.astro';
 ---
 
 <Layout title="My details">
   <PageIntro title="My details" lead="Your household, what you share, and your privacy choices." />
-  <ComingSoon milestone="M4">You will be able to edit your household, choose what to share, and delete your information.</ComingSoon>
+  {/* Arrives in M4. */}<Note>You will be able to edit your household, choose what to share, and delete your information.</Note>
 </Layout>

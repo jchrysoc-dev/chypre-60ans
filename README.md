@@ -8,28 +8,32 @@ Private, invite-only website for a week-long 60th birthday celebration in Cyprus
 
 ## Stack
 
-Astro (content collections + Zod schemas) · Tailwind CSS · Vitest. Supabase (auth + database) and Vercel deployment arrive in M2.
+Astro, server-rendered (content collections with Zod schemas), Tailwind CSS, Supabase (magic-link login and Postgres with Row-Level Security), Vercel, and Vitest with PGlite for database tests.
 
 ## Commands
 
-Requires Node 24+.
+Requires Node 24+. First-time Supabase setup: [docs/SETUP_SUPABASE.md](docs/SETUP_SUPABASE.md). Copy `.env.example` to `.env.local` and fill it in.
 
 | Command | What it does |
 |---|---|
 | `npm install` | Install dependencies (versions are pinned exactly). |
 | `npm run dev` | Local site at http://localhost:4321, reloading on code and content changes. |
 | `npm run build` | Type-check (`astro check`), validate all content, and build to `dist/`. Fails with a readable message if a content file is wrong. |
-| `npm run preview` | Serve the built `dist/` locally. |
-| `npm test` | Unit tests: content schemas, date/money formatting, colour contrast. |
+| `npm test` | Tests: content schemas, formatting, colour contrast, and Row-Level Security (real migrations on an in-process Postgres, fake data only). |
+| `node --env-file=.env.local scripts/add-admin.ts --email … --name "…"` | **Add an organiser (admin).** Creates their login if needed. Organisers can't be made from the website. |
 
-Deploying and adding an admin are documented once M2 is in place.
+**Deploy:** Vercel deploys `main` automatically once the GitHub repo is connected (set the three variables from `.env.example` in Vercel → Settings → Environment Variables). Full deployment checklist arrives in M6.
 
 ## Where things live
 
 ```
 content/        editorial content (Markdown + YAML), the only place facts live
 docs/           decisions, content schema, (M5) editing guide for Mum
-src/lib/        content schemas and formatting helpers
+src/lib/        content schemas, Supabase clients, guest-list logic
+src/actions/    form handlers (login, guest list)
+src/middleware.ts  login check on every request; organiser check on /admin
 src/pages/      one file per page; renders content, holds no copy of its own
+supabase/       migrations (run in order) and fake seed data for tests
+scripts/        one-off commands for Jacques (add-admin)
 tests/          Vitest tests (fake data only)
 ```

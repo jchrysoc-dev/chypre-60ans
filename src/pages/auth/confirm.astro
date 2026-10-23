@@ -1,0 +1,37 @@
+---
+/**
+ * Landing page for the link in the login email.
+ * Logging in needs one tap on a button (a POST), not just opening the link: some email
+ * security scanners open every link in an email, which would otherwise use up the
+ * one-time link before the guest clicks it.
+ */
+import { actions } from 'astro:actions';
+import Layout from '../../layouts/Layout.astro';
+import PageIntro from '../../components/PageIntro.astro';
+import Note from '../../components/Note.astro';
+
+const result = Astro.getActionResult(actions.auth.confirmLink);
+if (result?.data) return Astro.redirect('/');
+
+const tokenHash = Astro.url.searchParams.get('token_hash');
+---
+
+<Layout title="Log in" bare>
+  {
+    tokenHash && !result?.error ? (
+      <>
+        <PageIntro title="Welcome!" lead="Tap the button to open the birthday website." />
+        <form method="POST" action={actions.auth.confirmLink}>
+          <input type="hidden" name="token_hash" value={tokenHash} />
+          <button type="submit" class="button w-full sm:w-auto">Log in</button>
+        </form>
+      </>
+    ) : (
+      <>
+        <PageIntro title="This link no longer works" />
+        <Note>{result?.error?.message ?? 'This login link is incomplete. Please ask for a new one.'}</Note>
+        <a href="/login" class="button mt-6">Send me a new link</a>
+      </>
+    )
+  }
+</Layout>

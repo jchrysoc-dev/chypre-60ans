@@ -1,69 +1,90 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
-@import '@fontsource-variable/lora';
-@import '@fontsource-variable/source-sans-3';
+@import '@fontsource/gfs-didot';
+@import '@fontsource-variable/atkinson-hyperlegible-next';
 
-/* Warm Mediterranean palette. Every text/background pair used is WCAG AA (checked in tests/contrast.test.ts). */
+/*
+ * An invitation printed in navy ink on linen, edged with Lefkara lace.
+ * Text/background pairs are WCAG AA, checked in tests/contrast.test.ts.
+ * "thread" is decorative only (lace, rules) and never used for text.
+ */
 @theme {
-  --color-cream: #fbf6ee;
-  --color-sand: #f1e6d4;
-  --color-ink: #2a2622;
-  --color-ink-soft: #574f47;
-  --color-sea: #1d5b85;
-  --color-sea-dark: #154466;
-  --color-terracotta: #a9481f;
-  --color-olive: #5b672c;
+  --color-linen: #f6f1e6;
+  --color-paper: #fffdf8;
+  --color-ink: #1c3149;
+  --color-ink-soft: #4a5868;
+  --color-sea: #1f5c8a;
+  --color-sea-deep: #173f60;
+  --color-clay: #8f3e22;
+  --color-olive: #56622a;
+  --color-thread: #c9b99a;
 
-  --font-serif: 'Lora Variable', Georgia, 'Times New Roman', serif;
-  --font-sans: 'Source Sans 3 Variable', 'Segoe UI', system-ui, sans-serif;
+  /* Didot is for display sizes only (≥ 28px); Atkinson Hyperlegible was designed for low-vision readers. */
+  --font-display: 'GFS Didot', 'Didot', 'Bodoni 72', Georgia, serif;
+  --font-sans: 'Atkinson Hyperlegible Next Variable', 'Atkinson Hyperlegible', 'Segoe UI', system-ui, sans-serif;
 }
 
 @layer base {
-  /* Base size 18px (1.125rem) for a 50+ audience; scales with the user's browser setting. */
+  /* Base 18px (1.125rem), scaling with the visitor's own browser text size. */
   html {
     font-size: 112.5%;
   }
   body {
-    @apply bg-cream font-sans text-ink leading-relaxed;
+    @apply bg-linen font-sans text-ink leading-[1.6];
   }
   h1,
-  h2,
+  h2 {
+    @apply font-display font-normal text-ink;
+    letter-spacing: -0.005em;
+    line-height: 1.15;
+  }
   h3 {
-    @apply font-serif text-ink;
+    @apply font-sans font-bold text-ink;
   }
   a {
-    @apply text-sea underline underline-offset-4 decoration-2;
+    @apply text-sea underline decoration-1 underline-offset-[0.2em];
   }
   a:hover {
-    @apply text-sea-dark;
+    @apply text-sea-deep decoration-2;
   }
   :focus-visible {
-    @apply outline-3 outline-offset-2 outline-terracotta;
+    @apply outline-3 outline-offset-2 outline-clay;
   }
 }
 
 @layer components {
   .prose-site {
-    @apply prose prose-lg max-w-none;
+    @apply prose prose-lg max-w-[38rem];
     --tw-prose-body: var(--color-ink);
     --tw-prose-headings: var(--color-ink);
     --tw-prose-links: var(--color-sea);
     --tw-prose-bold: var(--color-ink);
-    --tw-prose-bullets: var(--color-terracotta);
+    --tw-prose-bullets: var(--color-olive);
   }
-  .card {
-    @apply rounded-2xl bg-white p-5 shadow-sm ring-1 ring-sand sm:p-6;
+  .prose-site :where(h2) {
+    @apply font-display font-normal;
   }
+
   .button {
-    @apply inline-flex min-h-12 items-center justify-center rounded-full bg-sea px-6 py-3 font-semibold text-white no-underline;
+    @apply inline-flex min-h-12 items-center justify-center rounded-md bg-sea px-6 py-3 font-bold text-paper no-underline;
   }
   .button:hover {
-    @apply bg-sea-dark text-white;
+    @apply bg-sea-deep text-paper;
   }
-  .button-secondary {
-    @apply inline-flex min-h-12 items-center justify-center rounded-full bg-white px-6 py-3 font-semibold text-sea no-underline ring-2 ring-sea;
+  .button-quiet {
+    @apply inline-flex min-h-12 items-center justify-center rounded-md px-6 py-3 font-bold text-sea no-underline ring-1 ring-sea;
   }
-  .placeholder-note {
-    @apply rounded-xl border-2 border-dashed border-olive bg-sand p-4 text-ink;
+  .button-quiet:hover {
+    @apply bg-paper ring-2;
+  }
+
+  /* A row in a ruled list (programme, accommodation, resources). */
+  .ruled > * + * {
+    @apply border-t border-thread;
+  }
+
+  /* A short note about something not available yet. */
+  .note {
+    @apply max-w-[38rem] border-l-4 border-olive bg-paper py-3 pr-4 pl-4 text-ink;
   }
 }

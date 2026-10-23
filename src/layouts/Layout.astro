@@ -1,13 +1,21 @@
 ---
 import { getEntry } from 'astro:content';
+import LaceBand from '../components/LaceBand.astro';
 import '../styles/global.css';
 
 interface Props {
   title: string;
   description?: string;
+  /** The welcome page's invitation already shows the site title as its heading. */
+  hideSiteTitle?: boolean;
+  /** Login pages: no navigation, since nothing else is reachable before logging in. */
+  bare?: boolean;
 }
 
-const { title, description } = Astro.props;
+import { actions } from 'astro:actions';
+
+const { title, description, hideSiteTitle = false, bare = false } = Astro.props;
+const person = Astro.locals.person;
 const event = await getEntry('event', 'event');
 const siteTitle = event!.data.title;
 
@@ -29,47 +37,62 @@ const isCurrent = (href: string) => (href === '/' ? current === '/' : current.st
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#f6f1e6" />
     {description && <meta name="description" content={description} />}
-    <title>{title === siteTitle ? siteTitle : `${title} · ${siteTitle}`}</title>
+    <title>{title === siteTitle ? siteTitle : `${title} – ${siteTitle}`}</title>
     <slot name="head" />
   </head>
   <body class="min-h-screen">
     <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 button">Skip to content</a>
-    <header class="border-b border-sand bg-white">
-      <div class="mx-auto max-w-4xl px-4 py-4">
-        <a href="/" class="font-serif text-2xl font-semibold text-ink no-underline">{siteTitle}</a>
-        <nav aria-label="Main" class="mt-3">
-          <ul class="flex flex-wrap gap-2">
-            {
-              nav.map((item) => (
-                <li>
-                  <a
-                    href={item.href}
-                    aria-current={isCurrent(item.href) ? 'page' : undefined}
-                    class:list={[
-                      'inline-flex min-h-11 items-center rounded-full px-4 font-semibold no-underline',
-                      isCurrent(item.href) ? 'bg-sea text-white hover:text-white' : 'bg-sand text-ink hover:text-sea-dark',
-                    ]}
-                  >
-                    {item.label}
-                  </a>
-                </li>
-              ))
-            }
-          </ul>
-        </nav>
-      </div>
+    <header class="mx-auto max-w-4xl px-4 pt-5">
+      {!hideSiteTitle && <a href="/" class="font-display text-[1.65rem] leading-tight text-ink no-underline">{siteTitle}</a>}
+      {bare ? <div class="mt-4 border-b border-thread" /> : (
+      <nav aria-label="Main" class:list={['border-b border-thread', !hideSiteTitle && 'mt-2']}>
+        <ul class="-ml-3 flex flex-wrap">
+          {
+            nav.map((item) => (
+              <li>
+                <a
+                  href={item.href}
+                  aria-current={isCurrent(item.href) ? 'page' : undefined}
+                  class:list={[
+                    'relative inline-flex min-h-12 items-center px-3 font-bold no-underline',
+                    isCurrent(item.href)
+                      ? 'text-ink after:absolute after:inset-x-3 after:bottom-1.5 after:h-[3px] after:rounded-full after:bg-clay'
+                      : 'text-sea hover:text-sea-deep',
+                  ]}
+                >
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+      )}
     </header>
 
-    <main id="main" class="mx-auto max-w-4xl px-4 py-8 sm:py-10">
+    <main id="main" class="mx-auto max-w-4xl px-4 py-8 sm:py-12">
       <slot />
     </main>
 
     <footer class="mx-auto max-w-4xl px-4 pb-10 text-ink-soft">
-      <p class="flex flex-wrap gap-x-6 gap-y-2 border-t border-sand pt-6">
-        <a href="/me">My details</a>
-        <a href="/privacy">Your privacy</a>
+      {current === '/' ? <hr class="border-thread" /> : <LaceBand />}
+      <p class="mt-4 flex flex-wrap gap-x-6 gap-y-1">
+        {person && <a href="/me" class="inline-flex min-h-12 items-center">My details</a>}
+        {person?.role === 'admin' && <a href="/admin" class="inline-flex min-h-12 items-center">Guest list</a>}
+        <a href="/privacy" class="inline-flex min-h-12 items-center">Your privacy</a>
       </p>
+      {
+        person && (
+          <form method="POST" action={'/login' + actions.auth.logout} class="mt-2">
+            <span>Logged in as {person.full_name}. </span>
+            <button type="submit" class="inline-flex min-h-12 items-center text-sea underline underline-offset-[0.2em]">
+              Log out
+            </button>
+          </form>
+        )
+      }
     </footer>
   </body>
 </html>

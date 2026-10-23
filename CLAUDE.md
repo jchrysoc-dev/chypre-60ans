@@ -12,7 +12,7 @@
 
 ## 1. Context
 
-- **Event:** 60th birthday party of Jacques's mother, in Cyprus, on **29 May 2027** (confirm year).
+- **Event:** 60th birthday party of Jacques's mother, in Cyprus, on **29 May 2027**
 - **Client:** Jacques's mother ("Mum"). Non-technical. She must be able to **edit the site herself, easily**, without touching code or a terminal.
 - **Developer/owner:** Jacques (bilingual FR/EN, comfortable with AI coding tools, uses the Antigravity IDE).
 - **Audience:** Family and friends, many aged 50+, on phones as much as laptops. Logins must be painless.
@@ -134,11 +134,14 @@ CLAUDE.md / AGENTS.md
 
 ## 9. Commands
 
-Stack: Astro + Tailwind + Vitest (Supabase and Vercel from M2). Details in `README.md`.
+Stack: Astro (server output, Vercel adapter) + Tailwind + Supabase + Vitest/PGlite. Details in `README.md`; Supabase setup in `docs/SETUP_SUPABASE.md`.
 
 - `npm run dev`: local site at http://localhost:4321
 - `npm run build`: type-check, validate content, build. **Run before declaring any change done.**
-- `npm test`: unit tests (schemas, formatting, contrast)
+- `npm test`: tests (schemas, formatting, contrast, RLS on PGlite)
+- `node --env-file=.env.local scripts/add-admin.ts --email … --name "…"`: add an organiser
+
+Database changes: add a new file in `supabase/migrations/` (never edit one that has been applied), update `src/lib/database.types.ts`, and add RLS tests in `tests/db/`.
 
 Content schemas live in `src/lib/content-schemas.ts` and are documented in `docs/CONTENT_SCHEMA.md`. Update both together.
 Dependencies are pinned to exact versions at least two weeks old.

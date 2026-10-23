@@ -1,0 +1,29 @@
+---
+/**
+ * A band of Lefkara-style lace: a zigzag "river" between two rows of open diamonds,
+ * after the geometric embroidery of Pano Lefkara. Purely decorative.
+ */
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+const id = `lace-${Math.random().toString(36).slice(2, 8)}`;
+---
+
+<svg class:list={['block h-7 w-full text-thread', className]} aria-hidden="true" focusable="false">
+  <defs>
+    <pattern id={id} width="28" height="28" patternUnits="userSpaceOnUse">
+      <g fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round">
+        <path d="M0 14 L7 7 L14 14 L21 21 L28 14" />
+        <path d="M14 1 L18 5 L14 9 L10 5 Z" />
+        <path d="M0 19 L4 23 L0 27 M28 19 L24 23 L28 27" />
+      </g>
+      <g fill="currentColor">
+        <circle cx="14" cy="5" r="1.1" />
+        <circle cx="7" cy="14" r="1" />
+        <circle cx="21" cy="14" r="1" />
+      </g>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill={`url(#${id})`} />
+</svg>

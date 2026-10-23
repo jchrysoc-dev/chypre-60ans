@@ -1,10 +1,65 @@
 ---
+import { actions, isInputError } from 'astro:actions';
 import Layout from '../layouts/Layout.astro';
 import PageIntro from '../components/PageIntro.astro';
-import ComingSoon from '../components/ComingSoon.astro';
+import Note from '../components/Note.astro';
+
+const sent = Astro.getActionResult(actions.auth.requestLink);
+const loggedOut = Astro.getActionResult(actions.auth.logout)?.data;
+if (Astro.locals.person && !sent && !loggedOut) return Astro.redirect('/');
+
+const emailError = isInputError(sent?.error) ? sent.error.fields.email?.[0] : undefined;
+const otherError = sent?.error && !isInputError(sent.error) ? sent.error.message : undefined;
+const notOnList = Astro.url.searchParams.get('reason') === 'not-on-list';
 ---
 
-<Layout title="Log in">
-  <PageIntro title="Log in" lead="Type your email address and we will send you a link to log in. No password needed." />
-  <ComingSoon milestone="M2">Login by email link will be switched on in the next step.</ComingSoon>
+<Layout title="Log in" bare>
+  {
+    sent?.data ? (
+      <>
+        <PageIntro title="Check your email" lead="If your address is on the guest list, a login link is on its way." />
+        <div class="prose-site">
+          <ol>
+            <li>Open the email called <strong>“Your link to the birthday website”</strong>.</li>
+            <li>Tap <strong>Log in</strong> in that email. You will stay logged in on this device.</li>
+          </ol>
+          <p>
+            Nothing after 5 minutes? Look in your spam or junk folder. If it is not there either, your email may not be
+            on the guest list yet: please ask the organisers.
+          </p>
+        </div>
+        <p class="mt-6">
+          <a href="/login" class="inline-flex min-h-12 items-center">Use a different email address</a>
+        </p>
+      </>
+    ) : (
+      <>
+        <PageIntro
+          title="Log in"
+          lead="Type your email address and we will send you a link. There is no password to remember."
+        />
+        {loggedOut && <Note>You are logged out. See you soon!</Note>}
+        {notOnList && <Note>Your email address is not on the guest list. Please ask the organisers to add you.</Note>}
+        {otherError && <Note>{otherError}</Note>}
+        <form method="POST" action={actions.auth.requestLink} class="mt-6 max-w-[30rem]" novalidate>
+          <label for="email" class="block font-bold">Your email address</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            inputmode="email"
+            autocapitalize="none"
+            spellcheck="false"
+            required
+            aria-describedby={emailError ? 'email-error' : undefined}
+            aria-invalid={emailError ? 'true' : undefined}
+            class="mt-2 block min-h-14 w-full rounded-md border border-ink-soft bg-paper px-4 text-[1.15rem]"
+          />
+          {emailError && <p id="email-error" class="mt-2 font-bold text-clay">{emailError}</p>}
+          <button type="submit" class="button mt-5 w-full sm:w-auto">Send me a login link</button>
+        </form>
+      </>
+    )
+  }
 </Layout>

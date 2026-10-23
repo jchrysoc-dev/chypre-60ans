@@ -21,18 +21,18 @@ const ratio = (a: string, b: string) => {
   return (hi + 0.05) / (lo + 0.05);
 };
 
-const WHITE = '#ffffff';
 const pairs: [string, string, string][] = [
-  ['ink on cream', color('ink'), color('cream')],
-  ['ink-soft on cream', color('ink-soft'), color('cream')],
-  ['ink-soft on white', color('ink-soft'), WHITE],
-  ['ink on sand', color('ink'), color('sand')],
-  ['sea link on cream', color('sea'), color('cream')],
-  ['sea link on white', color('sea'), WHITE],
-  ['white on sea button', WHITE, color('sea')],
-  ['white on sea-dark button', WHITE, color('sea-dark')],
-  ['terracotta on white', color('terracotta'), WHITE],
-  ['olive on white', color('olive'), WHITE],
+  ['ink on linen', color('ink'), color('linen')],
+  ['ink on paper', color('ink'), color('paper')],
+  ['ink-soft on linen', color('ink-soft'), color('linen')],
+  ['ink-soft on paper', color('ink-soft'), color('paper')],
+  ['sea links on linen', color('sea'), color('linen')],
+  ['sea links on paper', color('sea'), color('paper')],
+  ['paper on sea button', color('paper'), color('sea')],
+  ['paper on sea-deep button', color('paper'), color('sea-deep')],
+  ['clay times on linen', color('clay'), color('linen')],
+  ['clay date on paper', color('clay'), color('paper')],
+  ['olive on linen', color('olive'), color('linen')],
 ];
 
 describe('WCAG AA contrast', () => {

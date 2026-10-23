@@ -7,17 +7,15 @@ const resources = (await getCollection('cyprus')).sort((a, b) => a.data.order - 
 ---
 
 <Layout title="Cyprus" description="Practical information for visiting Cyprus.">
-  <PageIntro title="Cyprus" lead="Everything practical for your trip." />
-  <ul class="grid gap-4 sm:grid-cols-2">
+  <PageIntro title="Cyprus" lead="Practical things to know before you travel." />
+  <ul class="ruled max-w-[38rem] border-y border-thread">
     {
       resources.map((resource) => (
-        <li class="card">
-          <h2 class="text-2xl font-semibold">
-            <a href={`/cyprus/${resource.id}`} class="text-ink no-underline hover:underline">
-              {resource.data.title}
-            </a>
+        <li class="py-5">
+          <h2 class="text-[1.75rem]">
+            <a href={`/cyprus/${resource.id}`}>{resource.data.title}</a>
           </h2>
-          <p class="mt-2">{resource.data.summary}</p>
+          <p class="mt-1">{resource.data.summary}</p>
         </li>
       ))
     }

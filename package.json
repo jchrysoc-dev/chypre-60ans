@@ -5,12 +5,14 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro check && astro build",
-    "preview": "astro preview",
     "test": "vitest run"
   },
   "dependencies": {
-    "@fontsource-variable/lora": "5.3.0",
-    "@fontsource-variable/source-sans-3": "5.3.0",
+    "@astrojs/vercel": "11.0.13",
+    "@fontsource-variable/atkinson-hyperlegible-next": "5.3.0",
+    "@fontsource/gfs-didot": "5.3.0",
+    "@supabase/ssr": "0.12.7",
+    "@supabase/supabase-js": "2.117.3",
     "@tailwindcss/typography": "0.5.20",
     "@tailwindcss/vite": "4.3.3",
     "astro": "7.3.8",
@@ -19,8 +21,12 @@
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10",
+    "@electric-sql/pglite": "0.5.8",
     "@types/node": "24.19.1",
     "typescript": "6.0.3",
     "vitest": "5.0.3"
+  },
+  "overrides": {
+    "path-to-regexp": "6.3.0"
   }
 }
