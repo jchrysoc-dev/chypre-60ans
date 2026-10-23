@@ -1,9 +1,9 @@
 /**
  * Looks up the photos listed in content/photos/*.yaml and the image files made for them
- * by scripts/fetch-photos.mjs.
+ * by scripts/fetch-photos.mjs (npm run photos), listed in public/photos/sizes.json.
  */
 import { getCollection, type CollectionEntry } from 'astro:content';
-import sizes from './photo-sizes.json';
+import sizes from '../../public/photos/sizes.json';
 
 export type PhotoEntry = CollectionEntry<'photos'>;
 
@@ -12,8 +12,9 @@ export interface PhotoImage {
   id: string;
   alt: string;
   caption: string;
-  creditName: string;
-  creditUrl: string;
+  /** Who took it. Left out for some of the family's own photos. */
+  creditName?: string;
+  creditUrl?: string;
   /** CSS aspect-ratio, e.g. "3 / 2". */
   aspect: string;
   /** CSS object-position. */
@@ -38,7 +39,7 @@ export function toImage(entry: PhotoEntry): PhotoImage {
   const { id, data } = entry;
   const widths = (sizes as Record<string, number[]>)[id];
   if (!widths?.length) {
-    throw new Error(`content/photos/${id}.yaml has no image files yet. Run: node scripts/fetch-photos.mjs`);
+    throw new Error(`content/photos/${id}.yaml has no image files yet. Run: npm run photos`);
   }
   const [w, h] = data.aspect.split(':').map(Number);
   const file = (width: number) => `/photos/${id}-${width}.webp`;

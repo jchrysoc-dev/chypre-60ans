@@ -24,7 +24,8 @@ const photo = await photoForPage('/');
         style={`object-position: ${photo.focus};`}
       />
       <figcaption class="hero-credit">
-        {photo.caption}, <a href={photo.creditUrl} rel="noopener" target="_blank">{photo.creditName}</a>
+        {photo.caption}
+        {photo.creditName && photo.creditUrl && <>, <a href={photo.creditUrl} rel="noopener" target="_blank">{photo.creditName}</a></>}
       </figcaption>
       <div class="hero-lace hidden sm:block">
         <LaceBand tone="paper" />

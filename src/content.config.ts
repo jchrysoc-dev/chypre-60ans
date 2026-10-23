@@ -40,13 +40,14 @@ function eventYamlLoader(): Loader {
   };
 }
 
-const markdown = (dir: string) => glob({ pattern: '*.md', base: `./content/${dir}` });
+/** Files starting with "_" (the templates people copy) are never published. */
+const markdown = (dir: string) => glob({ pattern: ['*.md', '!_*'], base: `./content/${dir}` });
 
 export const collections = {
   event: defineCollection({ loader: eventYamlLoader(), schema: eventSchema }),
-  pages: defineCollection({ loader: glob({ pattern: '*.md', base: './content' }), schema: pageSchema }),
+  pages: defineCollection({ loader: glob({ pattern: ['*.md', '!_*'], base: './content' }), schema: pageSchema }),
   activities: defineCollection({ loader: markdown('activities'), schema: activitySchema }),
   accommodation: defineCollection({ loader: markdown('accommodation'), schema: accommodationSchema }),
   cyprus: defineCollection({ loader: markdown('cyprus'), schema: cyprusResourceSchema }),
-  photos: defineCollection({ loader: glob({ pattern: '*.yaml', base: './content/photos' }), schema: photoSchema }),
+  photos: defineCollection({ loader: glob({ pattern: ['*.yaml', '!_*'], base: './content/photos' }), schema: photoSchema }),
 };

@@ -1,0 +1,23 @@
+# Runs the same check Mum's agent runs (npm run check) on every push and pull request,
+# so Jacques gets an email from GitHub if a change breaks the website's content or build.
+# Needs no secrets.
+name: Check the website
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check

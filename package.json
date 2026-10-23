@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro check && astro build",
+    "build": "node scripts/check-content.ts && astro check && astro build",
+    "check": "npm run build && node scripts/check-content.ts --done",
+    "photos": "node scripts/fetch-photos.mjs",
     "test": "vitest run"
   },
   "dependencies": {

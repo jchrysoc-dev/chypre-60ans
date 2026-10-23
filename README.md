@@ -18,8 +18,9 @@ Requires Node 24+. First-time Supabase setup: [docs/SETUP_SUPABASE.md](docs/SETU
 |---|---|
 | `npm install` | Install dependencies (versions are pinned exactly). |
 | `npm run dev` | Local site at http://localhost:4321, reloading on code and content changes. |
-| `npm run build` | Type-check (`astro check`), validate all content, and build to `dist/`. Fails with a readable message if a content file is wrong. |
-| `node scripts/fetch-photos.mjs` | Download and compress the photos listed in `content/photos/` into `public/photos/` (run after adding or changing a photo). |
+| `npm run build` | Check all content (plain-English messages), type-check (`astro check`), and build to `dist/`. Vercel runs this. |
+| `npm run check` | The one command for content editors (Mum and her agent): the same as `build`, ending with an "everything looks good" line. Needs no secrets. |
+| `npm run photos` | Prepare the photos listed in `content/photos/` (download from Unsplash, or resize your own from `content/photos/originals/`) into `public/photos/`. Run after adding or changing a photo. |
 | `npm test` | Tests: content schemas, formatting, colour contrast, and Row-Level Security (real migrations on an in-process Postgres, fake data only). |
 | `node --env-file=.env.local scripts/add-admin.ts --email … --name "…"` | **Add an organiser (admin).** Creates their login if needed. Organisers can't be made from the website. |
 
@@ -36,6 +37,6 @@ src/middleware.ts  login check on every request; organiser check on /admin
 src/styles/     design tokens (tokens.css): colours, fonts, type scale, spacing
 src/pages/      one file per page; renders content, holds no copy of its own
 supabase/       migrations (run in order) and fake seed data for tests
-scripts/        one-off commands for Jacques (add-admin)
+scripts/        content checks, photo preparation, and one-off commands for Jacques (add-admin)
 tests/          Vitest tests (fake data only)
 ```

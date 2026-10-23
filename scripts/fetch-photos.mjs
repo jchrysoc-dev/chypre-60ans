@@ -1,11 +1,13 @@
 /**
- * Downloads every photo listed in content/photos/*.yaml from Unsplash, crops it to its
+ * Prepares every photo listed in content/photos/*.yaml: downloads it from Unsplash (unsplash_id),
+ * or reads your own picture from content/photos/originals/ (source_file), crops it to its
  * "aspect" around its "focus", and writes compressed WebP files to public/photos/.
  * Each file is kept under 200 KB, because guests are often on a phone on mobile data.
+ * The WebP files carry no camera or location data (sharp drops it), so nothing private is published.
  *
- * Run from the project root:  node scripts/fetch-photos.mjs
+ * Run from the project root:  npm run photos   (same as: node scripts/fetch-photos.mjs)
  * Existing files are skipped. Add --force to rebuild them all.
- * Also writes src/lib/photo-sizes.json, the list of sizes each photo has.
+ * Also writes public/photos/sizes.json, the list of sizes each photo has.
  */
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import sharp from 'sharp';
@@ -18,6 +20,7 @@ const SOURCE_WIDTH = 2400;
 
 const force = process.argv.includes('--force');
 const contentDir = new URL('../content/photos/', import.meta.url);
+const originalsDir = new URL('../content/photos/originals/', import.meta.url);
 const outDir = new URL('../public/photos/', import.meta.url);
 await mkdir(outDir, { recursive: true });
 
@@ -41,9 +44,22 @@ for (const file of (await readdir(contentDir)).filter((name) => name.endsWith('.
     continue;
   }
 
-  const original = await download(`https://images.unsplash.com/${photo.unsplash_id}?w=${SOURCE_WIDTH}&q=85&fm=jpg`, id);
+  let original;
+  if (photo.source_file) {
+    const path = new URL(photo.source_file, originalsDir);
+    if (!(await exists(path))) {
+      console.error(`${id}: the picture "${photo.source_file}" is not in content/photos/originals/. Put it there and try again.`);
+      process.exitCode = 1;
+      continue;
+    }
+    original = await readFile(path);
+  } else {
+    original = await download(`https://images.unsplash.com/${photo.unsplash_id}?w=${SOURCE_WIDTH}&q=85&fm=jpg`, id);
+  }
 
   // Crop to the wanted shape, keeping the "focus" point of the picture in view.
+  // Phone photos are often stored sideways with a "rotate me" note: turn them the right way up first.
+  original = await sharp(original).rotate().toBuffer();
   const { width, height } = await sharp(original).metadata();
   const [aw, ah] = photo.aspect.split(':').map(Number);
   const [fx, fy] = photo.focus.split(' ').map((v) => parseFloat(v) / 100);
@@ -88,4 +104,4 @@ for (const name of (await readdir(outDir)).sort()) {
   if (match) (sizes[match[1]] ??= []).push(Number(match[2]));
 }
 for (const widths of Object.values(sizes)) widths.sort((a, b) => a - b);
-await writeFile(new URL('../src/lib/photo-sizes.json', import.meta.url), JSON.stringify(sizes, null, 2) + '\n');
+await writeFile(new URL('sizes.json', outDir), JSON.stringify(sizes, null, 2) + '\n');

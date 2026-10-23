@@ -23,6 +23,6 @@ const { photo, class: className } = Astro.props;
   />
   <figcaption>
     {photo.caption}
-    <a href={photo.creditUrl} rel="noopener" target="_blank">{photo.creditName}</a>
+    {photo.creditName && photo.creditUrl && <a href={photo.creditUrl} rel="noopener" target="_blank">{photo.creditName}</a>}
   </figcaption>
 </figure>

@@ -16,7 +16,12 @@ The schemas are enforced in code by [`src/lib/content-schemas.ts`](../src/lib/co
 | Links are full addresses starting with `https://`. | — |
 | A file's **name is its id** (lowercase, words joined by `-`). Ids of activities must never change once guests have signed up, because sign-ups are stored against them. | `activities/boat-trip.md` → id `boat-trip` |
 | Markdown files: settings go between the `---` lines (YAML frontmatter), and the free text after them is the body. | — |
-| **No personal data** (guest names, emails, phone numbers) in any content file. | — |
+| **No personal data** (guest names, emails, phone numbers) in any content file. The website's files are **public**, and `npm run check` fails if it finds an email address or phone number. | — |
+| **Only known fields.** A field the schema does not list is an error, with a "Did you mean…?" hint (so a typo like `captian` can never be silently ignored). | `"captian" is not a field this file knows. Did you mean "caption"?` |
+| **Links must start with `https://`.** | — |
+| **Text has a length limit** (100 letters for titles and names, 150 to 300 for sentences). The message says the limit. | — |
+| **Templates:** each folder has a `_template` file to copy for a new item. Files starting with `_` are never published. A test keeps every template valid. | `content/activities/_template.md` |
+| **Checks:** `npm run check` (also the first step of `npm run build`, so Vercel runs it too) checks every file and explains problems in plain English. It also checks file names (lowercase words joined by dashes), one photo per page, that photos have their web-sized copies, and that activities are in 2027 (and inside the party week once it is set). Things still to fill in (`[Placeholder…]`, `TBD`) are listed but never stop publishing. | — |
 
 ## `content/event.yaml`: canonical event facts
 
@@ -86,16 +91,15 @@ Files: `welcome.md`, `thank-you.md`, `privacy.md`.
 
 ## `content/photos/<id>.yaml`: one photo per file
 
-Photos are from [Unsplash](https://unsplash.com) (free licence). The file name is the photo's id and names its image files. To add or change a photo, edit its `.yaml` and run `node scripts/fetch-photos.mjs`, which downloads it, crops it and writes compressed WebP files (each under 200 KB) to `public/photos/`.
+A photo is either one of the family's own pictures or one from [Unsplash](https://unsplash.com) (free licence). The file name is the photo's id and names its image files. After adding or changing a photo, run `npm run photos`: it prepares the picture (downloads it from Unsplash, or reads your own from `content/photos/originals/`), crops it, and writes small compressed WebP copies (each under 200 KB, with no camera or location details) to `public/photos/`. The originals folder is never published.
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
-| `unsplash_id` | text | yes | The part of the image address after `images.unsplash.com/`, like `photo-1701121685501-03d44cca164c`. |
-| `alt` | text | yes | What the photo shows, for people who cannot see it. |
-| `caption` | text | yes | Short line under the photo. |
-| `credit_name` | text | yes | e.g. "Sergei Gussev on Unsplash". |
-| `credit_url` | link | yes | The photo's page on Unsplash. |
+| `source_file` | file name | one of these two | Your own picture, like `harbour.jpg` (.jpg, .png or .webp), in `content/photos/originals/`. |
+| `unsplash_id` | text | one of these two | A photo from Unsplash: the part of its image address after `images.unsplash.com/`, like `photo-1701121685501-03d44cca164c`. |
+| `alt` | text | yes | What the photo shows, for people who cannot see it. Up to 250 letters. |
+| `caption` | text | yes | Short line under the photo. Up to 100 letters. |
+| `credit_name`, `credit_url` | text, link | Unsplash: yes. Own photo: no | Give both or neither. e.g. "Sergei Gussev on Unsplash". |
 | `aspect` | `3:2` \| `4:3` \| `16:9` | yes | Shape the photo is cropped to. |
 | `focus` | text like `75% 50%` | no | Part of the photo kept in view when cropped (left to right, top to bottom). Defaults to the centre. |
-| `page` | text like `/activities` | no | The page the photo decorates. `/` is the big photo at the top of the Welcome page, any other page gets a postcard next to its title. Only the first photo (by file name) for a page is shown. |
-
+| `page` | text like `/activities` | no | The page the photo decorates. `/` is the big photo at the top of the Welcome page, any other page gets a postcard next to its title. Only one photo per page. |

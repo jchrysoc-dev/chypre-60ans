@@ -125,13 +125,13 @@ describe('photoSchema', () => {
   });
 
   it('has an image file for every photo in content/photos', () => {
-    const sizes = JSON.parse(readFileSync(new URL('../src/lib/photo-sizes.json', import.meta.url), 'utf-8'));
+    const sizes = JSON.parse(readFileSync(new URL('../public/photos/sizes.json', import.meta.url), 'utf-8'));
     const ids = readdirSync(new URL('../content/photos/', import.meta.url))
-      .filter((name) => name.endsWith('.yaml'))
+      .filter((name) => name.endsWith('.yaml') && !name.startsWith('_'))
       .map((name) => name.replace(/\.yaml$/, ''));
     expect(ids.length).toBeGreaterThan(0);
     for (const id of ids) {
-      expect(sizes[id], `${id} has no image files: run node scripts/fetch-photos.mjs`).toBeTruthy();
+      expect(sizes[id], `${id} has no image files: run npm run photos`).toBeTruthy();
       for (const width of sizes[id]) {
         const file = new URL(`../public/photos/${id}-${width}.webp`, import.meta.url);
         expect(statSync(file).size, `${id}-${width}.webp is over 200 KB`).toBeLessThanOrEqual(200 * 1024);

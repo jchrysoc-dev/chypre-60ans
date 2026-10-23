@@ -1,0 +1,34 @@
+# HOW TO USE THIS FILE
+# 1. Copy it and give the copy a new name: lowercase words joined by dashes, ending in .yaml
+#    (for example: harbour-evening.yaml). That name is the photo's ID.
+# 2. Fill in the lines below. Lines starting with # are notes for you and are ignored.
+# 3. Run:  npm run photos   (it makes the small web-sized copies)
+#
+# Choose ONE of these two lines for where the picture comes from. Remove the # of the one you use.
+#   - your own picture: put the file in content/photos/originals/ and write its name here
+#   - a picture from unsplash.com: its code, like photo-1701121685501-03d44cca164c
+source_file: harbour.jpg
+# unsplash_id: photo-1701121685501-03d44cca164c
+
+# What the picture shows, for people who cannot see it (up to 250 letters). Not a title.
+alt: Fishing boats tied up in a small harbour at sunset.
+
+# A short line printed under the picture (up to 100 letters).
+caption: The harbour at sunset
+
+# Who took it. Needed for Unsplash pictures, optional for your own.
+# Both lines go together: give both or neither. The address must start with https://
+# credit_name: Photographer Name on Unsplash
+# credit_url: https://unsplash.com/photos/example
+
+# The shape of the picture on the page. Choose one: 3:2, 4:3, 16:9
+aspect: 3:2
+
+# Which part stays in view when the picture is cropped: "across% down%" (0% is left or top).
+# 50% 50% is the middle.
+focus: 50% 50%
+
+# The page the picture goes on (optional). Remove the # to use it.
+# Only one picture can be used on each page. "/" is the big picture on the Welcome page.
+# Pages: /  /activities  /accommodation  /participants  /rsvp  /cyprus  /login
+# page: /activities

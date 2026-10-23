@@ -6,3 +6,10 @@ dist/
 .env.local
 .env.*.local
 .DS_Store
+
+# Your own original photos stay on your computer; only the small copies in public/photos/ are published.
+content/photos/originals/*
+!content/photos/originals/README.md
+
+# Mum's personal safety settings (copied from docs/mum-claude-settings.json), kept on her computer only.
+.claude/settings.local.json
