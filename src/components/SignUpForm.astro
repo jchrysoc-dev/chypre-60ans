@@ -4,14 +4,15 @@
  * Save button. The database checks everything again (capacity, RSVP, children, start time).
  */
 import { actions } from 'astro:actions';
+import Note from './Note.astro';
 import type { Activity, HouseholdView } from '../lib/activities';
-import { blockedReason, closedReason, people, placesLine } from '../lib/signups';
+import { blockedReason, closedReason, householdBlocked, people, placesHint, placesLine } from '../lib/signups';
 
 interface Props {
   activity: Activity;
   view: HouseholdView;
   /** The outcome of saving this activity just now, if it was this one. */
-  outcome?: { ok: boolean; message: string };
+  outcome?: { ok: boolean; message: string; changed?: boolean };
 }
 const { activity, view, outcome } = Astro.props;
 const { data } = activity;
@@ -21,6 +22,9 @@ const mine = view.signups.get(activity.id) ?? new Map();
 const ahead = view.ahead.get(activity.id);
 const closed = closedReason({ cancelled: data.status === 'cancelled', start: data.start });
 const formId = `signup-${activity.id}`;
+const hint = placesHint(data.capacity, counts.confirmed);
+// Nobody signed up and nobody can be: one sentence instead of a form of greyed-out boxes.
+const blockedAll = mine.size === 0 ? householdBlocked(view.members.map((m) => blockedReason(m, data))) : null;
 
 const stateOf = (personId: string) => {
   const status = mine.get(personId);
@@ -29,9 +33,10 @@ const stateOf = (personId: string) => {
   return undefined;
 };
 const BLOCKED = { rsvp: 'Reply to the invitation first', 'not-coming': 'Not coming to the party (change the reply)' };
+const tone = !outcome ? undefined : !outcome.ok ? 'error' : outcome.changed === false ? 'info' : 'success';
 ---
 
-<div class="mt-4 border-t border-thread pt-4">
+<div class="mt-5 border-t border-thread pt-4">
   <p class="font-bold">{placesLine(data.capacity, counts.confirmed, counts.waitlisted)}</p>
 
   {
@@ -52,10 +57,25 @@ const BLOCKED = { rsvp: 'Reply to the invitation first', 'not-coming': 'Not comi
           </ul>
         )}
       </>
+    ) : blockedAll ? (
+      <p class="mt-1 text-ink-soft">
+        {blockedAll === 'rsvp' && (
+          <>
+            <a href="/rsvp">Reply to the invitation</a> first, then you can sign up here.
+          </>
+        )}
+        {blockedAll === 'not-coming' && (
+          <>
+            Your household isn't coming to the party. <a href="/rsvp">Change the reply</a> to sign up.
+          </>
+        )}
+        {blockedAll === 'child' && 'This one is for adults only.'}
+      </p>
     ) : (
-      <form id={formId} method="POST" action={`${actions.activities.save}#${activity.id}`} class="mt-2">
+      <form id={formId} method="POST" action={`${actions.activities.save}#${activity.id}`} class="mt-1">
+        {hint && <p class="text-ink-soft">{hint}</p>}
         <input type="hidden" name="activity_id" value={activity.id} />
-        <fieldset>
+        <fieldset class="mt-2">
           <legend class="text-ink-soft">Who is coming from your household?</legend>
           <ul class="mt-1">
             {view.members.map((member) => {
@@ -64,24 +84,24 @@ const BLOCKED = { rsvp: 'Reply to the invitation first', 'not-coming': 'Not comi
               const state = stateOf(member.id);
               return (
                 <li>
-                  <label class:list={['flex min-h-tap items-center gap-3', blocked && 'text-ink-soft']}>
+                  <label class:list={['flex min-h-tap items-start gap-3 py-2.5', blocked && 'text-ink-soft']}>
                     <input
                       type="checkbox"
                       name="person_id"
                       value={member.id}
                       checked={signedUp}
                       disabled={Boolean(blocked)}
-                      class="size-6 shrink-0 accent-sea"
+                      class="tick mt-px"
                     />
                     <span>
-                      {member.full_name}
-                      {state && <span class:list={['ml-1 font-bold', state === 'Going' ? 'text-olive' : 'text-clay']}>· {state}</span>}
+                      <span class="block">{member.full_name}</span>
+                      {state && <span class:list={['block font-bold', state === 'Going' ? 'text-olive' : 'text-clay']}>{state}</span>}
                       {(blocked === 'rsvp' || blocked === 'not-coming') && (
-                        <span class="ml-1">
-                          · <a href="/rsvp">{BLOCKED[blocked]}</a>
-                        </span>
+                        <a href="/rsvp" class="block">
+                          {BLOCKED[blocked]}
+                        </a>
                       )}
-                      {blocked === 'child' && <span class="ml-1">· Not for children</span>}
+                      {blocked === 'child' && <span class="block">Adults only</span>}
                     </span>
                   </label>
                 </li>
@@ -89,12 +109,18 @@ const BLOCKED = { rsvp: 'Reply to the invitation first', 'not-coming': 'Not comi
             })}
           </ul>
         </fieldset>
-        <button type="submit" class="button mt-3">Save</button>
+        <button type="submit" class="button mt-3">Save who's going</button>
       </form>
     )
   }
 
   <div aria-live="polite">
-    {outcome && <p class:list={['note mt-3', !outcome.ok && 'border-clay font-bold']}>{outcome.message}</p>}
+    {
+      outcome && tone && (
+        <Note tone={tone} title={outcome.ok ? undefined : 'Not saved'} class="mt-3">
+          {outcome.message}
+        </Note>
+      )
+    }
   </div>
 </div>

@@ -27,13 +27,20 @@ const rendered = new Map(await Promise.all(activities.map(async (a) => [a.id, (a
 <Layout title="Activities" description="The programme for the birthday week, with times, costs and places.">
   <PageIntro title="Activities" lead="The programme for the week. Join as many as you like. All times are Cyprus time." />
   {
-    nobodyReplied && (
+    nobodyReplied && activities.length > 0 && (
       <Note>
         To sign up for activities, first <a href="/rsvp">reply to the invitation</a> for your household.
       </Note>
     )
   }
-  <div aria-live="polite">{outcome && !outcome.activityId && <p class="note border-clay font-bold">{outcome.message}</p>}</div>
+  <div aria-live="polite">
+    {outcome && !outcome.activityId && <Note tone="error" title="Not saved" class="mt-4">{outcome.message}</Note>}
+  </div>
+  {
+    activities.length === 0 && (
+      <Note>The programme isn't ready yet. Activities appear here as soon as they are planned, and you can sign up then.</Note>
+    )
+  }
 
   {
     [...days].map(([day, items]) => (
@@ -48,7 +55,7 @@ const rendered = new Map(await Promise.all(activities.map(async (a) => [a.id, (a
             return (
               <li id={activity.id} class="grid gap-x-8 gap-y-1 py-6 sm:grid-cols-[7rem_1fr]">
                 <p>
-                  <time datetime={data.start} class="font-display text-time leading-none text-clay">
+                  <time datetime={data.start} class="font-display text-time text-clay">
                     {formatTime(data.start)}
                   </time>
                   {data.end && (
@@ -58,7 +65,7 @@ const rendered = new Map(await Promise.all(activities.map(async (a) => [a.id, (a
                   )}
                 </p>
                 <div class="max-w-measure">
-                  <h3 class="text-subheading leading-snug">
+                  <h3 class="text-subheading">
                     {data.status === 'cancelled' ? (
                       <>
                         <s>{data.title}</s> <span class="text-clay">Cancelled</span>
@@ -76,14 +83,8 @@ const rendered = new Map(await Promise.all(activities.map(async (a) => [a.id, (a
                       {data.cost_eur > 0 ? `${formatEuros(data.cost_eur)} per person` : 'Free'}
                       {data.cost_note && <span class="block text-ink-soft">{data.cost_note}</span>}
                     </dd>
-                    <dt class="text-ink-soft">Places</dt>
-                    <dd>{data.capacity ? `${data.capacity}, then a waiting list` : 'No limit'}</dd>
-                    {data.kid_friendly && (
-                      <>
-                        <dt class="text-ink-soft">Children</dt>
-                        <dd>Welcome</dd>
-                      </>
-                    )}
+                    <dt class="text-ink-soft">Children</dt>
+                    <dd>{data.kid_friendly ? 'Welcome' : 'Adults only'}</dd>
                   </dl>
                   <div class="prose-site mt-3">
                     <Content />

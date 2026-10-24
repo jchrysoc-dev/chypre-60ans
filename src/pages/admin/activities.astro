@@ -4,8 +4,10 @@ import { actions, isInputError } from 'astro:actions';
 import Layout from '../../layouts/Layout.astro';
 import PageIntro from '../../components/PageIntro.astro';
 import AdminNav from '../../components/AdminNav.astro';
+import Headcount from '../../components/Headcount.astro';
+import Note from '../../components/Note.astro';
 import { ensureActivitiesSynced, loadAdminActivities, type AdminActivity, type AdminSignup } from '../../lib/activities';
-import { formatDate, formatTime, cyprusDay } from '../../lib/format';
+import { byName, formatDate, formatTime, cyprusDay } from '../../lib/format';
 import { people } from '../../lib/signups';
 
 const db = Astro.locals.supabase;
@@ -23,134 +25,227 @@ await ensureActivitiesSynced();
 const all = await loadAdminActivities(db);
 const current = all.filter((a) => a.inContent);
 const removed = all.filter((a) => !a.inContent && a.going.length + a.waiting.length > 0);
+const shown = [...current, ...removed];
 
-const { data: everyone = [] } = await db.from('people').select('id, full_name').order('full_name');
+const { data: everyone = [] } = await db.from('people').select('id, full_name');
+const guests = [...(everyone ?? [])].sort((a, b) => byName(a.full_name, b.full_name));
 
 const children = (list: AdminSignup[]) => list.filter((s) => s.isChild).length;
-const headcount = (a: AdminActivity) => {
-  const going = a.going.length;
-  const kids = children(a.going);
-  const split = going ? ` (${going - kids} ${going - kids === 1 ? 'adult' : 'adults'}, ${kids} ${kids === 1 ? 'child' : 'children'})` : '';
-  return `Going: ${going}${a.capacity ? ` of ${a.capacity}` : ''}${split} · Waiting: ${a.waiting.length}`;
+const split = (list: AdminSignup[]) => {
+  const kids = children(list);
+  const adults = list.length - kids;
+  return `${adults} ${adults === 1 ? 'adult' : 'adults'}, ${kids} ${kids === 1 ? 'child' : 'children'}`;
 };
+const placesLeft = (a: AdminActivity) => (a.capacity ? Math.max(a.capacity - a.going.length, 0) : undefined);
 const when = (iso: string) => `${formatDate(cyprusDay(iso))}, ${formatTime(iso)}`;
-
-const field = 'mt-1 block min-h-tap w-full rounded-md border border-ink-soft bg-paper px-3';
 ---
 
 <Layout title="Activities: who is going">
   <PageIntro title="Activities" lead="Who is going to each activity, and who is waiting for a place." />
   <AdminNav />
 
-  <p><a href="/admin/activities.csv" download class="button-quiet">Download all sign-ups (CSV)</a></p>
+  <p class="flex flex-wrap items-center gap-x-5 gap-y-2">
+    <a href="/admin/activities.csv" download class="button">Download all sign-ups (CSV)</a>
+    <span class="text-ink-soft">Opens in Excel or Google Sheets: one row per person per activity.</span>
+  </p>
 
   <div aria-live="polite" class="mt-4">
-    {done && <p class="note">{done}</p>}
-    {failure && <p class="note border-clay font-bold">{failure}</p>}
+    {done && <Note tone="success">{done}</Note>}
+    {failure && <Note tone="error" title="Not done">{failure}</Note>}
   </div>
 
   {
-    [...current, ...removed].map((activity) => (
-      <section id={activity.id} class="mt-section" aria-labelledby={`h-${activity.id}`}>
-        <h2 id={`h-${activity.id}`} class="text-heading">
-          {activity.cancelled ? <s>{activity.title}</s> : activity.title}
-        </h2>
-        <p class="mt-1 text-ink-soft">
-          {when(activity.start)}
-          {activity.cancelled && <strong class="ml-2 text-clay">Cancelled: let these people know.</strong>}
-          {!activity.inContent && <strong class="ml-2 text-clay">No longer on the website. Ask Jacques to tidy this up.</strong>}
-        </p>
-        <p class="mt-2 font-bold">{headcount(activity)}</p>
-
-        <div class="mt-4 grid gap-8 sm:grid-cols-2">
-          <div>
-            <h3>Going</h3>
-            {activity.going.length === 0 && <p class="mt-1 text-ink-soft">Nobody yet.</p>}
-            <ul class="ruled mt-2">
-              {activity.going.map((s) => (
-                <li class="py-2">
-                  <span class="font-bold">{s.fullName}</span>
-                  {s.isChild && <span class="text-ink-soft"> (child)</span>}
-                  <span class="block text-ink-soft">{s.household}</span>
-                  {s.promotedAt && <span class="block text-ink-soft">From the waiting list, {when(s.promotedAt)}</span>}
-                  <details>
-                    <summary class="inline-flex min-h-tap cursor-pointer items-center text-sea underline">Remove</summary>
-                    <form method="POST" action={`${actions.admin.removeSignUp}#${activity.id}`} class="bg-paper p-3">
-                      <input type="hidden" name="activity_id" value={activity.id} />
-                      <input type="hidden" name="person_id" value={s.personId} />
-                      <input type="hidden" name="full_name" value={s.fullName} />
-                      <label class="flex min-h-tap items-center gap-3">
-                        <input type="checkbox" name="confirm" value="true" required class="size-6" />
-                        Yes, take {s.fullName} off this activity
-                      </label>
-                      <button type="submit" class="button-quiet mt-2">Remove</button>
-                    </form>
-                  </details>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h3>Waiting list</h3>
-            {activity.waiting.length === 0 && <p class="mt-1 text-ink-soft">Nobody waiting.</p>}
-            <ol class="ruled mt-2">
-              {activity.waiting.map((s) => (
-                <li class="py-2">
-                  <span class="font-bold">{s.fullName}</span>
-                  {s.isChild && <span class="text-ink-soft"> (child)</span>}
-                  <span class="block text-ink-soft">
-                    {s.household} · group {s.groupNumber}, {s.peopleAhead ? `${people(s.peopleAhead)} ahead` : 'first in line'}
-                  </span>
-                  <details>
-                    <summary class="inline-flex min-h-tap cursor-pointer items-center text-sea underline">Give a place or remove</summary>
-                    <form method="POST" action={`${actions.admin.signUpGuest}#${activity.id}`} class="bg-paper p-3">
-                      <input type="hidden" name="activity_id" value={activity.id} />
-                      <input type="hidden" name="person_id" value={s.personId} />
-                      <input type="hidden" name="over_capacity" value="on" />
-                      <button type="submit" class="button-quiet">Give {s.fullName} a place now, even if it is full</button>
-                    </form>
-                    <form method="POST" action={`${actions.admin.removeSignUp}#${activity.id}`} class="mt-2 bg-paper p-3">
-                      <input type="hidden" name="activity_id" value={activity.id} />
-                      <input type="hidden" name="person_id" value={s.personId} />
-                      <input type="hidden" name="full_name" value={s.fullName} />
-                      <label class="flex min-h-tap items-center gap-3">
-                        <input type="checkbox" name="confirm" value="true" required class="size-6" />
-                        Yes, take {s.fullName} off the waiting list
-                      </label>
-                      <button type="submit" class="button-quiet mt-2">Remove</button>
-                    </form>
-                  </details>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </div>
-
-        {activity.inContent && !activity.cancelled && (
-          <details class="mt-4 max-w-measure">
-            <summary class="inline-flex min-h-tap cursor-pointer items-center text-sea underline">
-              Sign someone up for {activity.title}
-            </summary>
-            <form method="POST" action={`${actions.admin.signUpGuest}#${activity.id}`} class="mt-2 space-y-3 bg-paper p-4">
-              <input type="hidden" name="activity_id" value={activity.id} />
-              <div>
-                <label for={`who-${activity.id}`} class="block font-bold">Who</label>
-                <select id={`who-${activity.id}`} name="person_id" required class={field}>
-                  <option value="">Choose a guest…</option>
-                  {(everyone ?? []).map((p) => (
-                    <option value={p.id}>{p.full_name}</option>
-                  ))}
-                </select>
-              </div>
-              <label class="flex min-h-tap items-center gap-3">
-                <input type="checkbox" name="over_capacity" class="size-6" /> Give a place even if it is full
-              </label>
-              <button type="submit" class="button">Sign up</button>
-            </form>
-          </details>
-        )}
+    shown.length === 0 ? (
+      <Note class="mt-block">No activities on the website yet. They appear here as soon as they are added.</Note>
+    ) : (
+      <section class="mt-block" aria-labelledby="glance">
+        <h2 id="glance" class="text-heading">At a glance</h2>
+        <table class="mt-4 w-full text-left">
+          <thead class="text-ink-soft">
+            <tr class="border-b border-thread">
+              <th scope="col" class="py-2 pr-4 font-normal">Activity</th>
+              <th scope="col" class="py-2 pr-4 font-normal">Going</th>
+              <th scope="col" class="py-2 font-normal">Waiting</th>
+            </tr>
+          </thead>
+          <tbody>
+            {shown.map((a) => {
+              const left = placesLeft(a);
+              return (
+                <tr class="border-b border-thread align-top">
+                  <th scope="row" class="py-3 pr-4 font-normal">
+                    <a href={`#${a.id}`} class="font-bold">
+                      {a.title}
+                    </a>
+                    <span class="block text-clay">{when(a.start)}</span>
+                    {a.cancelled && <span class="block font-bold">Cancelled</span>}
+                    {!a.inContent && <span class="block font-bold">No longer on the website</span>}
+                  </th>
+                  <td class="py-3 pr-4">
+                    <span class="font-bold">{a.going.length}</span>
+                    {a.capacity && <span class="text-ink-soft"> of {a.capacity}</span>}
+                    <span class="block text-ink-soft">
+                      {left === undefined ? 'No limit' : left === 0 ? 'Full' : `${left} left`}
+                    </span>
+                  </td>
+                  <td class="py-3 font-bold">{a.waiting.length}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </section>
-    ))
+    )
+  }
+
+  {
+    shown.map((activity) => {
+      const left = placesLeft(activity);
+      return (
+        <section id={activity.id} class="mt-section scroll-mt-4" aria-labelledby={`h-${activity.id}`}>
+          <p class="text-clay">{when(activity.start)}</p>
+          <h2 id={`h-${activity.id}`} class="text-heading">
+            {activity.cancelled ? <s>{activity.title}</s> : activity.title}
+          </h2>
+          {activity.cancelled && (
+            <Note tone="error" title="Cancelled" class="mt-3">
+              Let the people below know.
+            </Note>
+          )}
+          {!activity.inContent && (
+            <Note tone="error" title="No longer on the website" class="mt-3">
+              These sign-ups are kept so nobody is forgotten. Ask Jacques to tidy this up.
+            </Note>
+          )}
+
+          <Headcount
+            class="mt-5"
+            items={[
+              { label: 'Going', value: activity.going.length, of: activity.capacity ?? undefined, note: split(activity.going) },
+              ...(left !== undefined ? [{ label: 'Places left', value: left === 0 ? 'Full' : left }] : []),
+              { label: 'Waiting', value: activity.waiting.length },
+            ]}
+          />
+
+          <div class="mt-6 grid gap-x-10 gap-y-6 sm:grid-cols-2">
+            <div>
+              <h3>Going</h3>
+              {activity.going.length === 0 ? (
+                <p class="mt-1 text-ink-soft">Nobody yet.</p>
+              ) : (
+                <ul class="ruled mt-2 border-y border-thread">
+                  {activity.going.map((s) => (
+                    <li>
+                      <details class="disclosure">
+                        <summary class="justify-between py-2">
+                          <span>
+                            <span class="font-bold">{s.fullName}</span>
+                            {s.isChild && <span class="text-ink-soft"> (child)</span>}
+                            <span class="block text-ink-soft">
+                              {s.household}
+                              {s.promotedAt && <>. From the waiting list, {when(s.promotedAt)}</>}
+                            </span>
+                          </span>
+                          <span class="disclosure-label shrink-0">Remove</span>
+                        </summary>
+                        <form method="POST" action={`${actions.admin.removeSignUp}#${activity.id}`} class="disclosure-panel">
+                          <input type="hidden" name="activity_id" value={activity.id} />
+                          <input type="hidden" name="person_id" value={s.personId} />
+                          <input type="hidden" name="full_name" value={s.fullName} />
+                          <label class="flex min-h-tap items-center gap-3">
+                            <input type="checkbox" name="confirm" value="true" required class="tick" />
+                            Yes, take {s.fullName} off this activity
+                          </label>
+                          <button type="submit" class="button-quiet" data-busy="Removing…">
+                            Remove {s.fullName}
+                          </button>
+                        </form>
+                      </details>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div>
+              <h3>Waiting list</h3>
+              {activity.waiting.length === 0 ? (
+                <p class="mt-1 text-ink-soft">Nobody waiting.</p>
+              ) : (
+                <ol class="ruled mt-2 border-y border-thread">
+                  {activity.waiting.map((s) => (
+                    <li>
+                      <details class="disclosure">
+                        <summary class="justify-between py-2">
+                          <span>
+                            <span class="font-bold">{s.fullName}</span>
+                            {s.isChild && <span class="text-ink-soft"> (child)</span>}
+                            <span class="block text-ink-soft">
+                              {s.household}. Group {s.groupNumber}, {s.peopleAhead ? `${people(s.peopleAhead)} ahead` : 'first in line'}
+                            </span>
+                          </span>
+                          <span class="disclosure-label shrink-0">Options</span>
+                        </summary>
+                        <div class="disclosure-panel">
+                          <form method="POST" action={`${actions.admin.signUpGuest}#${activity.id}`}>
+                            <input type="hidden" name="activity_id" value={activity.id} />
+                            <input type="hidden" name="person_id" value={s.personId} />
+                            <input type="hidden" name="over_capacity" value="on" />
+                            <button type="submit" class="button">
+                              Give {s.fullName} a place now
+                            </button>
+                            <p class="mt-1 text-ink-soft">Even if it is full.</p>
+                          </form>
+                          <form method="POST" action={`${actions.admin.removeSignUp}#${activity.id}`} class="border-t border-thread pt-3">
+                            <input type="hidden" name="activity_id" value={activity.id} />
+                            <input type="hidden" name="person_id" value={s.personId} />
+                            <input type="hidden" name="full_name" value={s.fullName} />
+                            <label class="flex min-h-tap items-center gap-3">
+                              <input type="checkbox" name="confirm" value="true" required class="tick" />
+                              Yes, take {s.fullName} off the waiting list
+                            </label>
+                            <button type="submit" class="button-quiet mt-2" data-busy="Removing…">
+                              Remove {s.fullName}
+                            </button>
+                          </form>
+                        </div>
+                      </details>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+          </div>
+
+          {activity.inContent && !activity.cancelled && (
+            <details class="disclosure mt-4 max-w-measure">
+              <summary>
+                <span class="disclosure-label">Sign someone up for {activity.title}</span>
+              </summary>
+              <form method="POST" action={`${actions.admin.signUpGuest}#${activity.id}`} class="disclosure-panel">
+                <input type="hidden" name="activity_id" value={activity.id} />
+                <div>
+                  <label for={`who-${activity.id}`} class="block font-bold">
+                    Who
+                  </label>
+                  <select id={`who-${activity.id}`} name="person_id" required class="field">
+                    <option value="">Choose a guest…</option>
+                    {guests.map((p) => (
+                      <option value={p.id}>{p.full_name}</option>
+                    ))}
+                  </select>
+                </div>
+                <label class="flex min-h-tap items-center gap-3">
+                  <input type="checkbox" name="over_capacity" class="tick" /> Give a place even if it is full
+                </label>
+                <button type="submit" class="button">
+                  Sign up
+                </button>
+              </form>
+            </details>
+          )}
+        </section>
+      );
+    })
   }
 </Layout>

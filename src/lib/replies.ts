@@ -4,6 +4,7 @@
  */
 import type { Attending, Rsvp } from './database.types';
 import type { VisitorClient } from './supabase';
+import { byName } from './format';
 
 export interface GuestReply {
   personId: string;
@@ -27,7 +28,7 @@ export async function loadReplies(db: VisitorClient): Promise<GuestReply[]> {
     household: household.get(p.household_id) ?? '',
     isChild: p.is_child,
     reply: reply.get(p.id),
-  }));
+  })).sort((a, b) => byName(a.fullName, b.fullName));
 }
 
 export type Tally = Record<Attending | 'none', { adults: number; children: number }>;

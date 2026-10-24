@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cyprusDateTime, cyprusDay, formatDate, formatEuros, formatTimeRange, orTbd } from '../src/lib/format';
+import { byName, cyprusDateTime, cyprusDay, formatDate, formatEuros, formatTimeRange, orTbd } from '../src/lib/format';
 
 describe('format', () => {
   it('formats calendar dates without time-zone drift', () => {
@@ -28,5 +28,11 @@ describe('format', () => {
   it('writes timestamps for spreadsheets in Cyprus time', () => {
     expect(cyprusDateTime('2027-05-27T07:00:00+00:00')).toBe('2027-05-27 10:00');
     expect(cyprusDateTime(null)).toBe('');
+  });
+});
+
+describe('byName', () => {
+  it('sorts numbers and accents naturally', () => {
+    expect(['Guest 10', 'guest 2', 'Émile', 'Eva'].sort(byName)).toEqual(['Émile', 'Eva', 'guest 2', 'Guest 10']);
   });
 });

@@ -59,3 +59,6 @@ export function formatEuros(amount: number): string {
     maximumFractionDigits: Number.isInteger(amount) ? 0 : 2,
   }).format(amount);
 }
+
+/** Sorts names the way people expect: "Guest 2" before "Guest 10", accents and case ignored. */
+export const byName = new Intl.Collator(LOCALE, { numeric: true, sensitivity: 'base' }).compare;

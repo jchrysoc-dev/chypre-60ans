@@ -1,0 +1,23 @@
+---
+/** A row of big numbers for the organisers, e.g. "Going 12 of 12 · Waiting 2", each with a short note underneath. */
+interface Props {
+  items: { label: string; value: number | string; of?: number; note?: string }[];
+  class?: string;
+}
+const { items, class: className } = Astro.props;
+---
+
+<dl class:list={['flex flex-wrap gap-x-8 gap-y-4', className]}>
+  {
+    items.map((item) => (
+      <div>
+        <dt class="text-ink-soft">{item.label}</dt>
+        <dd class="mt-1 font-display text-figure">
+          {item.value}
+          {item.of !== undefined && <span class="font-sans text-lead text-ink-soft"> of {item.of}</span>}
+        </dd>
+        {item.note && <dd class="mt-1 text-ink-soft">{item.note}</dd>}
+      </div>
+    ))
+  }
+</dl>

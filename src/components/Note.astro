@@ -1,5 +1,34 @@
 ---
-/** A short note to guests, e.g. about a feature that is not switched on yet. */
+/**
+ * A short message: information (e.g. a feature that is not switched on yet), the outcome of
+ * something that just worked, or something that went wrong and what to do about it.
+ */
+interface Props {
+  tone?: 'info' | 'success' | 'error';
+  /** A bold first line, e.g. "Not saved". */
+  title?: string;
+  class?: string;
+}
+const { tone = 'info', title, class: className } = Astro.props;
 ---
 
-<p class="note"><slot /></p>
+<div class:list={['note', `note-${tone}`, className]}>
+  {
+    tone === 'success' ? (
+      <p class="flex gap-2">
+        <svg class="mt-1.5 size-4 shrink-0 text-olive" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <path d="M2 8.5 6 12.5 14 3.5" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span>
+          {title && <span class="note-title block">{title}</span>}
+          <slot />
+        </span>
+      </p>
+    ) : (
+      <>
+        {title && <p class="note-title">{title}</p>}
+        <p><slot /></p>
+      </>
+    )
+  }
+</div>

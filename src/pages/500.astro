@@ -1,0 +1,22 @@
+---
+/**
+ * Shown when something on the server fails (e.g. the database can't be reached). It must not
+ * depend on the database itself, so it uses the bare layout, without navigation.
+ */
+import Layout from '../layouts/Layout.astro';
+import PageIntro from '../components/PageIntro.astro';
+---
+
+<Layout title="The page didn't load" bare>
+  <PageIntro
+    title="The page didn't load"
+    lead="Something went wrong on the website's side, not yours. Your replies and sign-ups are safe."
+  />
+  <div class="prose-site">
+    <p>Please wait a minute, then try again. If it keeps happening, message the organisers.</p>
+  </div>
+  <p class="mt-6 flex flex-wrap gap-x-6 gap-y-3">
+    <a href={Astro.url.pathname} class="button">Try again</a>
+    <a href="/" class="inline-flex min-h-tap items-center">Go to the welcome page</a>
+  </p>
+</Layout>

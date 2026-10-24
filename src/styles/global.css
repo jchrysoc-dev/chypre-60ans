@@ -33,16 +33,21 @@
 }
 
 @layer components {
+  /* Markdown from content/: the same 18px text and heading sizes as the rest of the site. */
   .prose-site {
-    @apply prose prose-lg max-w-measure;
+    @apply prose max-w-measure;
     --tw-prose-body: var(--color-ink);
     --tw-prose-headings: var(--color-ink);
     --tw-prose-links: var(--color-sea);
     --tw-prose-bold: var(--color-ink);
     --tw-prose-bullets: var(--color-olive);
+    line-height: 1.6;
   }
   .prose-site :where(h2) {
-    @apply font-display font-normal;
+    @apply font-display text-heading font-normal;
+  }
+  .prose-site :where(h3) {
+    @apply text-subheading;
   }
 
   .button {
@@ -57,15 +62,88 @@
   .button-quiet:hover {
     @apply bg-paper ring-2;
   }
+  /* While a form is being sent (see Layout's script). */
+  .button[aria-disabled='true'],
+  .button-quiet[aria-disabled='true'] {
+    @apply cursor-wait opacity-75;
+  }
+  /* A button that looks like a link (e.g. "Log out"). */
+  .link-button {
+    @apply inline-flex min-h-tap items-center text-sea underline decoration-1 underline-offset-[0.2em];
+  }
+  .link-button:hover {
+    @apply text-sea-deep decoration-2;
+  }
+
+  /* Text boxes and drop-downs. */
+  .field {
+    @apply mt-1 block min-h-tap w-full rounded-control border border-ink-soft bg-paper px-3;
+  }
+  .field[aria-invalid='true'] {
+    @apply border-2 border-clay;
+  }
+  /* Tick boxes and round buttons: always inside a label at least one tap tall. */
+  .tick {
+    @apply size-6 shrink-0 accent-sea;
+  }
+
+  /*
+   * Something that opens in place: <details class="disclosure"><summary>…<span class="disclosure-label">…</span></summary>
+   * <div class="disclosure-panel">…</div></details>. A small arrow turns when it is open.
+   */
+  .disclosure > summary {
+    @apply flex min-h-tap cursor-pointer list-none items-center gap-3;
+  }
+  .disclosure > summary::-webkit-details-marker {
+    display: none;
+  }
+  .disclosure-label {
+    @apply text-sea underline decoration-1 underline-offset-[0.2em];
+  }
+  .disclosure-label::before {
+    content: '';
+    /*
+     * A small arrow drawn with borders: the box itself has no size. Plain CSS for display, because the
+     * utility "inline-block" also means "inline-size: --spacing-block" with our spacing tokens. Don't use it.
+     */
+    display: inline-block;
+    @apply mr-2 size-0 border-y-[0.35em] border-l-[0.5em] border-y-transparent border-l-current align-[0.05em];
+  }
+  .disclosure[open] > summary .disclosure-label::before {
+    rotate: 90deg;
+  }
+  .disclosure > summary:hover .disclosure-label {
+    @apply text-sea-deep decoration-2;
+  }
+  .disclosure-panel {
+    @apply mt-2 mb-3 space-y-3 bg-paper p-4 ring-1 ring-thread;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .disclosure-label::before {
+      transition: rotate 150ms ease-out;
+    }
+  }
 
   /* A row in a ruled list (programme, accommodation, resources). */
   .ruled > * + * {
     @apply border-t border-thread;
   }
 
-  /* A short note about something not available yet. */
+  /*
+   * A short message. Information and success have an olive edge; something that went wrong
+   * has a clay edge and a bold first line (see Note.astro).
+   */
   .note {
-    @apply max-w-measure border-l-4 border-olive bg-paper py-3 pr-4 pl-4 text-ink;
+    @apply max-w-measure border-l-4 border-olive bg-paper px-4 py-3 text-ink;
+  }
+  .note-error {
+    @apply border-clay;
+  }
+  .note-title {
+    @apply font-bold;
+  }
+  .note-error .note-title {
+    @apply text-clay;
   }
 
   /*
@@ -82,7 +160,8 @@
     @apply px-1 py-2 text-caption text-ink;
   }
   .postcard figcaption a {
-    @apply block text-ink-soft;
+    /* Padding makes the credit link at least 24px tall to tap. */
+    @apply block py-1 text-ink-soft;
   }
   @media (max-width: 39.999rem) {
     /* Shorter on phones, so the page's own content is not pushed off the first screen. */

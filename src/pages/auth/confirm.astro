@@ -23,13 +23,15 @@ const tokenHash = Astro.url.searchParams.get('token_hash');
         <PageIntro title="Welcome!" lead="Tap the button to open the birthday website." />
         <form method="POST" action={actions.auth.confirmLink}>
           <input type="hidden" name="token_hash" value={tokenHash} />
-          <button type="submit" class="button w-full sm:w-auto">Log in</button>
+          <button type="submit" class="button w-full sm:w-auto" data-busy="Logging in…">Log in</button>
         </form>
       </>
     ) : (
       <>
         <PageIntro title="This link no longer works" />
-        <Note>{result?.error?.message ?? 'This login link is incomplete. Please ask for a new one.'}</Note>
+        <Note tone="error" title={result?.error ? 'Link expired' : 'Link incomplete'}>
+          {result?.error?.message ?? 'Part of the login link is missing, perhaps because the email cut it in two. Please ask for a new one.'}
+        </Note>
         <a href="/login" class="button mt-6">Send me a new link</a>
       </>
     )

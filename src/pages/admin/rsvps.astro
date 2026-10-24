@@ -3,6 +3,7 @@
 import Layout from '../../layouts/Layout.astro';
 import PageIntro from '../../components/PageIntro.astro';
 import AdminNav from '../../components/AdminNav.astro';
+import Headcount from '../../components/Headcount.astro';
 import { formatDate } from '../../lib/format';
 import { loadReplies, tally, type GuestReply } from '../../lib/replies';
 
@@ -28,43 +29,35 @@ const ROWS = [
   ['no', 'Not coming'],
   ['none', 'Not replied yet'],
 ] as const;
+const figures = ROWS.map(([key, label]) => {
+  const { adults, children } = counts[key];
+  return {
+    label,
+    value: adults + children,
+    note: `${adults} ${adults === 1 ? 'adult' : 'adults'}, ${children} ${children === 1 ? 'child' : 'children'}`,
+  };
+});
 ---
 
 <Layout title="Replies">
   <PageIntro title="Replies" lead="Who is coming to the party, when they arrive, and what they eat." />
   <AdminNav />
 
-  <p><a href="/admin/rsvps.csv" download class="button-quiet">Download all replies (CSV)</a></p>
+  <p class="flex flex-wrap items-center gap-x-5 gap-y-2">
+    <a href="/admin/rsvps.csv" download class="button">Download all replies (CSV)</a>
+    <span class="text-ink-soft">Opens in Excel or Google Sheets: one row per person.</span>
+  </p>
 
   <section class="mt-block" aria-labelledby="counts">
-    <h2 id="counts" class="text-heading">Count</h2>
-    <table class="mt-3 w-full max-w-measure text-left">
-      <thead>
-        <tr class="border-b border-thread">
-          <th class="py-2"></th>
-          <th class="py-2">Adults</th>
-          <th class="py-2">Children</th>
-        </tr>
-      </thead>
-      <tbody>
-        {
-          ROWS.map(([key, label]) => (
-            <tr class="border-b border-thread">
-              <th class="py-2 font-normal">{label}</th>
-              <td class="py-2">{counts[key].adults}</td>
-              <td class="py-2">{counts[key].children}</td>
-            </tr>
-          ))
-        }
-      </tbody>
-    </table>
+    <h2 id="counts" class="text-heading">Who is coming</h2>
+    <Headcount items={figures} class="mt-5 border-y border-thread py-5" />
   </section>
 
   <section class="mt-section" aria-labelledby="waiting">
     <h2 id="waiting" class="text-heading">Not replied yet</h2>
     {notReplied.length === 0 ? <p class="mt-2">Everyone has replied.</p> : (
-      <ul class="mt-2">
-        {notReplied.map((r) => <li>{r.fullName} <span class="text-ink-soft">({r.household})</span></li>)}
+      <ul class="ruled mt-3 max-w-measure border-y border-thread">
+        {notReplied.map((r) => <li class="py-2"><span class="font-bold">{r.fullName}</span> <span class="text-ink-soft">({r.household})</span></li>)}
       </ul>
     )}
   </section>

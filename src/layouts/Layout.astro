@@ -38,6 +38,7 @@ const isCurrent = (href: string) => (href === '/' ? current === '/' : current.st
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
+    {/* The browser bar colour: must stay equal to --color-linen in tokens.css (a meta tag can't read CSS). */}
     <meta name="theme-color" content="#f8f1e3" />
     {description && <meta name="description" content={description} />}
     <title>{title === siteTitle ? siteTitle : `${title} – ${siteTitle}`}</title>
@@ -46,10 +47,11 @@ const isCurrent = (href: string) => (href === '/' ? current === '/' : current.st
   <body class="min-h-screen">
     <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 button">Skip to content</a>
     <header class="mx-auto max-w-page px-gutter pt-5">
-      {!hideSiteTitle && <a href="/" class="font-display text-brand leading-tight text-ink no-underline">{siteTitle}</a>}
+      {!hideSiteTitle && <a href="/" class="font-display text-brand text-ink no-underline">{siteTitle}</a>}
       {bare ? <div class="mt-4 border-b border-thread" /> : (
       <nav aria-label="Main" class:list={['border-b border-thread', !hideSiteTitle && 'mt-2']}>
-        <ul class="-ml-3 flex flex-wrap">
+        {/* Phones: two rows of three. Wider screens: one row. */}
+        <ul class="flex flex-wrap gap-x-5 nav:grid nav:grid-cols-[repeat(3,auto)] nav:justify-between sm:-ml-3 sm:flex sm:justify-start sm:gap-x-0">
           {
             nav.map((item) => (
               <li>
@@ -57,9 +59,9 @@ const isCurrent = (href: string) => (href === '/' ? current === '/' : current.st
                   href={item.href}
                   aria-current={isCurrent(item.href) ? 'page' : undefined}
                   class:list={[
-                    'relative inline-flex min-h-tap items-center px-3 font-bold no-underline',
+                    'relative inline-flex min-h-tap items-center font-bold no-underline sm:px-3',
                     isCurrent(item.href)
-                      ? 'text-ink after:absolute after:inset-x-3 after:bottom-1.5 after:h-[3px] after:rounded-full after:bg-clay'
+                      ? 'text-ink after:absolute after:inset-x-0 after:bottom-1.5 after:h-[3px] after:rounded-full after:bg-clay sm:after:inset-x-3'
                       : 'text-sea hover:text-sea-deep',
                   ]}
                 >
@@ -91,12 +93,33 @@ const isCurrent = (href: string) => (href === '/' ? current === '/' : current.st
         person && (
           <form method="POST" action={'/login' + actions.auth.logout} class="mt-2">
             <span>Logged in as {person.full_name}. </span>
-            <button type="submit" class="inline-flex min-h-tap items-center text-sea underline underline-offset-[0.2em]">
-              Log out
-            </button>
+            <button type="submit" class="link-button">Log out</button>
           </form>
         )
       }
     </footer>
+    <script>
+      // While a form is being sent, its button says "Saving…" (or its data-busy text) and can't be
+      // tapped again, so nobody sends twice on a slow phone connection. Forms work without this.
+      document.addEventListener('submit', (event) => {
+        const form = event.target as HTMLFormElement;
+        if (form.dataset.sending) return event.preventDefault();
+        form.dataset.sending = 'true';
+        const button = event.submitter;
+        if (!(button instanceof HTMLButtonElement)) return;
+        button.dataset.label = button.textContent ?? '';
+        button.textContent = button.dataset.busy ?? 'Saving…';
+        button.setAttribute('aria-disabled', 'true');
+      });
+      // Coming back with the browser's Back button shows the page as it was left: reset it.
+      window.addEventListener('pageshow', () => {
+        document.querySelectorAll<HTMLFormElement>('form[data-sending]').forEach((form) => delete form.dataset.sending);
+        document.querySelectorAll<HTMLButtonElement>('button[data-label]').forEach((button) => {
+          button.textContent = button.dataset.label!;
+          button.removeAttribute('aria-disabled');
+          delete button.dataset.label;
+        });
+      });
+    </script>
   </body>
 </html>

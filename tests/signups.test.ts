@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import type { SignupStatus } from '../src/lib/database.types';
-import { blockedReason, closedReason, joinNames, placesLine, planChanges, type Member } from '../src/lib/signups';
+import {
+  blockedReason,
+  closedReason,
+  householdBlocked,
+  joinNames,
+  placesHint,
+  placesLine,
+  planChanges,
+  type Member,
+} from '../src/lib/signups';
 
 const member = (overrides: Partial<Member> = {}): Member => ({
   id: 'p1',
@@ -67,5 +76,27 @@ describe('wording', () => {
     expect(placesLine(20, 12, 0)).toBe('8 of 20 places left');
     expect(placesLine(20, 20, 3)).toBe('Full, 3 waiting');
     expect(placesLine(2, 1, 3)).toBe('1 of 2 places left, 3 waiting');
+  });
+});
+
+describe('householdBlocked', () => {
+  it('is null as soon as one person can be ticked', () => {
+    expect(householdBlocked(['rsvp', null])).toBeNull();
+    expect(householdBlocked([])).toBeNull();
+  });
+
+  it('asks for a reply first, then explains "not coming", then "adults only"', () => {
+    expect(householdBlocked(['child', 'rsvp', 'not-coming'])).toBe('rsvp');
+    expect(householdBlocked(['not-coming', 'child'])).toBe('not-coming');
+    expect(householdBlocked(['child'])).toBe('child');
+  });
+});
+
+describe('placesHint', () => {
+  it('explains the waiting list only when the activity is full', () => {
+    expect(placesHint(12, 12)).toMatch(/waiting list/);
+    expect(placesHint(12, 13)).toMatch(/waiting list/);
+    expect(placesHint(12, 11)).toBeUndefined();
+    expect(placesHint(undefined, 40)).toBeUndefined();
   });
 });

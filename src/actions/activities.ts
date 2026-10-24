@@ -40,7 +40,9 @@ export const activities = {
         members.filter((m) => current.has(m.id) || !blockedReason(m, activity.data)).map((m) => m.id),
       );
       const { add, remove } = planChanges(current, new Set(person_id), editable);
-      if (add.length === 0 && remove.length === 0) return reply(true, 'Nothing changed.');
+      if (add.length === 0 && remove.length === 0) {
+        return { ...reply(true, 'Nothing changed: the ticks are the same as before.'), changed: false };
+      }
 
       const nameOf = (id: string) => firstName(members.find((m) => m.id === id)?.full_name ?? '');
       const sentences: string[] = [];

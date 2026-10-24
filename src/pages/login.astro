@@ -38,9 +38,9 @@ const notOnList = Astro.url.searchParams.get('reason') === 'not-on-list';
           title="Log in"
           lead="Type your email address and we will send you a link. There is no password to remember."
         />
-        {loggedOut && <Note>You are logged out. See you soon!</Note>}
-        {notOnList && <Note>Your email address is not on the guest list. Please ask the organisers to add you.</Note>}
-        {otherError && <Note>{otherError}</Note>}
+        {loggedOut && <Note tone="success">You are logged out. See you soon!</Note>}
+        {notOnList && <Note tone="error" title="Not on the guest list">Your email address is not on the guest list yet. Please ask the organisers to add you.</Note>}
+        {otherError && <Note tone="error" title="No email sent">{otherError}</Note>}
         <form method="POST" action={actions.auth.requestLink} class="mt-6 max-w-form" novalidate>
           <label for="email" class="block font-bold">Your email address</label>
           <input
@@ -54,10 +54,10 @@ const notOnList = Astro.url.searchParams.get('reason') === 'not-on-list';
             required
             aria-describedby={emailError ? 'email-error' : undefined}
             aria-invalid={emailError ? 'true' : undefined}
-            class="mt-2 block min-h-14 w-full rounded-md border border-ink-soft bg-paper px-4 text-lead"
+            class="field mt-2 text-lead"
           />
           {emailError && <p id="email-error" class="mt-2 font-bold text-clay">{emailError}</p>}
-          <button type="submit" class="button mt-5 w-full sm:w-auto">Send me a login link</button>
+          <button type="submit" class="button mt-5 w-full sm:w-auto" data-busy="Sending…">Send me a login link</button>
         </form>
       </>
     )

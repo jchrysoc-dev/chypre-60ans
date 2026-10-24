@@ -67,3 +67,22 @@ export function placesLine(capacity: number | undefined, confirmed: number, wait
   }
   return `Full${waitlisted ? `, ${waitlisted} waiting` : ''}`;
 }
+
+/** What ticking a name does now, when it isn't simply "you get a place". */
+export function placesHint(capacity: number | undefined, confirmed: number): string | undefined {
+  if (capacity && confirmed >= capacity) {
+    return 'Tick a name to join the waiting list. Places are given out in order, automatically, when one frees up.';
+  }
+  return undefined;
+}
+
+/**
+ * Why nobody in the household can be ticked at all, if that is the case (and nobody is signed
+ * up already), so the page shows one sentence instead of a form full of greyed-out boxes.
+ */
+export function householdBlocked(reasons: Blocked[]): Exclude<Blocked, null> | null {
+  if (reasons.length === 0 || reasons.some((r) => r === null)) return null;
+  if (reasons.includes('rsvp')) return 'rsvp';
+  if (reasons.includes('not-coming')) return 'not-coming';
+  return 'child';
+}
