@@ -83,6 +83,29 @@ Format: date · question → answer · why. "Default" means Claude proposed it a
 | 2026-10-23 | After the party | **Thank-you page + link to a shared photo album, then archive.** **Default:** all personal data deleted by **2027-08-31**, and the site becomes a static memento with no personal data. | Confirmed. Deletion date is a default. |
 | 2026-10-23 | Indexing | `noindex, nofollow` everywhere + `robots.txt` disallow all. `llms.txt` is served behind login. | From brief §3. |
 
+## M4: participants directory (decided 2026-10-24)
+
+| Date | Question | Answer | Why |
+|---|---|---|---|
+| 2026-10-24 | Fields | **Confirmed the 2026-10-23 list**: email (the login email, never a second address), phone with an "on WhatsApp" tick, city/country, staying at (an accommodation file or "other" with text), arrival/departure dates (from the RSVP). **Added: activities** (confirmed places only, never the waiting list). No note, no photo. | Jacques's answers. |
+| 2026-10-24 | Being listed | **Nothing by default, not even the name.** "Show me on the Participants page" (field `listed`) shows the name; every other field is a separate switch that only counts while `listed` is on. | A name plus "is coming" is personal data too. |
+| 2026-10-24 | Consent | **Per field**, each a row in `sharing_consents` with `granted_at` set by the database (guests can't choose it). Switching off deletes the row, so it is effective on the next read. A field that stays on keeps its original time. | Hard requirement from Jacques. |
+| 2026-10-24 | Households and children | **One card per household** on the page, but **each adult switches only their own fields**: never another adult, never an organiser. People without a login are not listed, except children by **first name only** when a listed adult in the household switches on `children`. | Consent is personal. |
+| 2026-10-24 | Enforced in the database | Guests can't read other households' `people`, `rsvps`, `profiles` or `sharing_consents` (RLS). `profiles` is readable **only by the person themselves** (not their household) and organisers. Other guests read `public.participants()` (security definer), which returns only listed people and **null for every field not shared**: unshared values never leave Postgres. Saving goes through `public.save_my_sharing()`, which runs as the caller so RLS applies. | Hard requirement: privacy in the database, not the UI. |
+| 2026-10-24 | Organisers | See everything (including details not shared), can **withdraw** a consent on request, but can **never switch sharing on** for anyone. | Consent must come from the guest. |
+| 2026-10-24 | Replied "no" | Not shown in the directory. Their choices are kept in case they change their reply. | The page is about who is coming. |
+| 2026-10-24 | Household label | Never shown to guests: cards show the listed people's names. | The label is Mum's own wording. |
+| 2026-10-24 | Admin "completed profile" | `/admin/participants` shows three groups: **Sharing**, **Chose not to share** (saved with everything off, `profiles.choices_saved_at`), **Not looked yet**. | Mum can nudge the last group. |
+| 2026-10-24 | WhatsApp | Group link at the top of `/participants`, **as well as** the directory, from the server-only env var `WHATSAPP_GROUP_URL` (must start with `https://chat.whatsapp.com/`). Left out when not set. | Confirms the 2026-10-23 decision. |
+| 2026-10-24 | Phone | International format with `+`, stored as digits (`+35799123456`). Cards show a tap-to-call link, and a "Message on WhatsApp" (wa.me) link when ticked. | Easy for guests abroad. |
+| 2026-10-24 | Directory deletion | **2027-06-30 03:00 Cyprus time**: all profiles and consents deleted by `private.close_directory()`, scheduled with **pg_cron** (yearly schedule, does nothing before the date). `public.participants()` returns nothing from that moment even if the job didn't run. Everything else stays on the **2027-08-31** default. | Contact sharing is only useful around the party. |
+| 2026-10-24 | Accommodation page | Each option shows who is staying there, only for people sharing "staying at". | Car-sharing, the reason "staying at" exists. |
+| 2026-10-25 | Recorded answers | Jacques confirmed the 2026-10-24 M4 answers above. | — |
+| 2026-10-25 | Saved-choices time | `profiles.choices_saved_at` (and `updated_at`) are set by the database only: guests get column-level insert/update grants that leave them out. | Otherwise a guest could fake "Chose not to share" on Mum's admin view. Found in the migration review. |
+| 2026-10-25 | /me scope | **Sharing switches plus "Clear everything I shared"** (empties the details and switches every field off, so the person shows as "Chose not to share"). Editing the household and deleting a whole account stay with Mum on `/admin`; the `/me` wording says so. | Keeps M4 to the directory. |
+| 2026-10-25 | Nudging | **No nudge on the site** for guests who haven't looked at sharing. Mum uses the "Not looked yet" group on `/admin/participants`. | Jacques's choice. |
+| 2026-10-25 | Browser test logins | Two fake `@example.com` guests created with the secret key, sessions made with `auth.admin.generateLink` + `verifyOtp` (no email sent), both households removed afterwards. | Same approach as the M3 browser test. |
+
 ## Design & tech
 
 | Date | Question | Answer | Why |
