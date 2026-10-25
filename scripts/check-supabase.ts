@@ -51,8 +51,13 @@ const anonSync = await anon.rpc('sync_activities', { p_activities: [], p_built_a
 // 42501 = permission denied. Any other error (e.g. "function not found") proves nothing.
 report(anonSync.error?.code === '42501', 'Not logged in: cannot change activities', 'public.sync_activities is callable without login! Re-run the migration.');
 
+const profilesTable = await secret.from('profiles').select('person_id').limit(1);
+report(!profilesTable.error, 'Participants migration applied (public.profiles exists)', 'Run `npx supabase db push` (supabase/migrations/20261024120000_participants_directory.sql).');
+const anonDirectory = await anon.rpc('participants');
+report(anonDirectory.error?.code === '42501', 'Not logged in: cannot read the participants directory', 'public.participants() is callable without login! Re-run the migration.');
+
 // Not logged in → no access to guest data.
-for (const table of ['households', 'people', 'rsvps', 'activities', 'activity_signups'] as const) {
+for (const table of ['households', 'people', 'rsvps', 'activities', 'activity_signups', 'profiles', 'sharing_consents'] as const) {
   const { data, error } = await anon.from(table).select('*').limit(1);
   report(Boolean(error) || (data?.length ?? 0) === 0, `Not logged in: cannot read ${table}`, 'Guest data is readable without login! Re-run the migration; do not change RLS.');
 }

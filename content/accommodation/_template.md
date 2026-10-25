@@ -1,7 +1,8 @@
 ---
 # HOW TO USE THIS FILE
 # 1. Copy it and give the copy a new name: lowercase words joined by dashes, ending in .md
-#    (for example: harbour-view-hotel.md).
+#    (for example: harbour-view-hotel.md). Never rename it afterwards: guests who say they
+#    stay there are linked to this name.
 # 2. Fill in the lines below. Lines starting with # are notes for you and are ignored.
 
 # Name of the place, up to 100 letters.

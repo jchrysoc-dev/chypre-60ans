@@ -3,19 +3,27 @@ import { getCollection, render } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import PageIntro from '../components/PageIntro.astro';
 import Note from '../components/Note.astro';
-import { formatEuros } from '../lib/format';
+import { byName, formatEuros } from '../lib/format';
 
 const places = (await getCollection('accommodation')).sort(
   (a, b) => (a.data.distance_to_venue_km ?? Infinity) - (b.data.distance_to_venue_km ?? Infinity),
 );
 const rendered = new Map(await Promise.all(places.map(async (p) => [p.id, (await render(p)).Content] as const)));
+// Only people who share "staying at" (public.participants() leaves it null for everyone else).
+const { data: entries } = await Astro.locals.supabase.rpc('participants');
+const stayingAt = (id: string) =>
+  (entries ?? [])
+    .filter((p) => !p.is_child && p.staying_at === id)
+    .map((p) => p.name)
+    .sort(byName);
 const kindLabel = { hotel: 'Hotel', villa: 'Villa', apartment: 'Apartments', guesthouse: 'Guesthouse', other: 'Place to stay' };
 ---
 
 <Layout title="Accommodation" description="Suggested places to stay. Guests book themselves.">
   <PageIntro title="Accommodation" lead="A few suggestions, closest to the party first. Please book directly with them." />
-  {/* "Where are you staying?" arrives in M4. */}
-  <Note>Soon you will be able to tell everyone where you are staying, to help with car-sharing.</Note>
+  <Note>
+    Staying at one of these? <a href="/me">Tell the other guests</a>, to help with car-sharing. Only guests who choose to are shown.
+  </Note>
 
   <ul class="ruled mt-block border-y border-thread">
     {
@@ -39,6 +47,11 @@ const kindLabel = { hotel: 'Hotel', villa: 'Villa', apartment: 'Apartments', gue
             <div class="prose-site mt-3">
               <Content />
             </div>
+            {stayingAt(place.id).length > 0 && (
+              <p class="mt-3">
+                <span class="font-bold">Staying here:</span> {stayingAt(place.id).join(', ')}
+              </p>
+            )}
             {data.booking_url && (
               <a href={data.booking_url} class="button-quiet mt-4" rel="noopener" target="_blank">
                 Booking website

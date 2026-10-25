@@ -24,7 +24,7 @@ Requires Node 24+. First-time Supabase setup: [docs/SETUP_SUPABASE.md](docs/SETU
 | `npm test` | Tests: content schemas, formatting, colour contrast, and Row-Level Security (real migrations on an in-process Postgres, fake data only). |
 | `node --env-file=.env.local scripts/add-admin.ts --email … --name "…"` | **Add an organiser (admin).** Creates their login if needed. Organisers can't be made from the website. |
 
-**Deploy:** Vercel deploys `main` automatically once the GitHub repo is connected (set the three variables from `.env.example` in Vercel → Settings → Environment Variables). Full deployment checklist arrives in M6.
+**Deploy:** Vercel deploys `main` automatically once the GitHub repo is connected (set the three Supabase variables from `.env.example` in Vercel → Settings → Environment Variables, plus the optional `WHATSAPP_GROUP_URL`). Full deployment checklist arrives in M6.
 
 ## Where things live
 

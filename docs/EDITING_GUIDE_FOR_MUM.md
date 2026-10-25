@@ -85,12 +85,15 @@ The activity stays on the website, marked "Cancelled", and nobody can sign up an
 **7. See who has signed up.**
 > Who has signed up for the boat trip?
 
-The assistant can't see guests' information, on purpose. It will tell you to open the website's **Organisers** page (you'll find the link at the bottom of any page). There you'll find three tabs:
+The assistant can't see guests' information, on purpose. It will tell you to open the website's **Organisers** page (you'll find the link at the bottom of any page). There you'll find four tabs:
 - **Guest list**: add guests, change their details, or remove them.
 - **Replies**: who is coming to the party, arrival dates, flights and dietary needs.
 - **Activities**: who is going to each activity and who is waiting for a place. You can sign someone up yourself (for example when they phone you), give someone a place even when it's full, or take someone off.
+- **Participants**: who appears on the Participants page and what they share, who chose not to share, and who hasn't looked yet (you may want to remind them). Only guests can switch their own sharing on, on their **My details** page. If someone asks you to hide something, click **Switch off** next to that detail, tick the box and confirm. Everything guests shared there is deleted on 30 June 2027.
 
-Each of the last two has a **Download (CSV)** button that opens in Excel or Google Sheets.
+The WhatsApp group link at the top of the Participants page is set up by Jacques: ask him to add or change it.
+
+**Replies** and **Activities** each have a **Download (CSV)** button that opens in Excel or Google Sheets.
 
 ### Taking back a change
 > Undo the last change and publish it.

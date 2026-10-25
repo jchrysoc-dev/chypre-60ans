@@ -1,0 +1,157 @@
+---
+/**
+ * Who shares what on the Participants page, for organisers only (the middleware and the
+ * action check this). Organisers can switch something off when a guest asks, never on.
+ */
+import { actions, isInputError } from 'astro:actions';
+import Layout from '../../layouts/Layout.astro';
+import PageIntro from '../../components/PageIntro.astro';
+import AdminNav from '../../components/AdminNav.astro';
+import Headcount from '../../components/Headcount.astro';
+import Note from '../../components/Note.astro';
+import { SHARING_FIELDS, type SharingField } from '../../lib/database.types';
+import { byName, cyprusDay, formatDate } from '../../lib/format';
+import { DIRECTORY_CLOSES } from '../../lib/sharing';
+
+const db = Astro.locals.supabase;
+
+const result = Astro.getActionResult(actions.admin.withdrawSharing);
+const failure = result?.error
+  ? isInputError(result.error)
+    ? Object.values(result.error.fields).flat().filter(Boolean).join(' ')
+    : result.error.message
+  : undefined;
+
+const [{ data: everyone }, { data: households }, { data: profiles }, { data: consents }, { data: rsvps }] = await Promise.all([
+  db.from('people').select('id, full_name, household_id, auth_user_id').eq('is_child', false),
+  db.from('households').select('id, label'),
+  db.from('profiles').select('person_id, choices_saved_at'),
+  db.from('sharing_consents').select('person_id, field, granted_at'),
+  db.from('rsvps').select('person_id, attending'),
+]);
+const household = new Map((households ?? []).map((h) => [h.id, h.label]));
+const saved = new Map((profiles ?? []).map((p) => [p.person_id, p.choices_saved_at]));
+const notComing = new Set((rsvps ?? []).filter((r) => r.attending === 'no').map((r) => r.person_id));
+const shares = new Map<string, Map<SharingField, string>>();
+for (const c of consents ?? []) {
+  shares.set(c.person_id, (shares.get(c.person_id) ?? new Map()).set(c.field, c.granted_at));
+}
+
+// Only people who can log in can choose; children and people without a login are never listed themselves.
+const guests = (everyone ?? []).filter((p) => p.auth_user_id).sort((a, b) => byName(a.full_name, b.full_name));
+const sharing = guests.filter((p) => shares.get(p.id)?.has('listed'));
+const declined = guests.filter((p) => !shares.get(p.id)?.has('listed') && saved.has(p.id));
+const notLooked = guests.filter((p) => !saved.has(p.id));
+
+const SHORT: Record<SharingField, string> = {
+  listed: 'Name',
+  email: 'Email',
+  phone: 'Phone',
+  city: 'Where they live',
+  staying_at: 'Where they stay',
+  dates: 'Arrival and departure',
+  activities: 'Activities',
+  children: "Children's first names",
+};
+const day = (iso: string) => formatDate(cyprusDay(iso));
+---
+
+<Layout title="Participants (organisers)">
+  <PageIntro title="Participants" lead="Who has chosen what to share with the other guests." />
+  <AdminNav />
+
+  <div aria-live="polite">
+    {result?.data && <Note tone="success">{result.data.message}</Note>}
+    {failure && <Note tone="error" title="Not switched off">{failure}</Note>}
+  </div>
+
+  <p class="max-w-measure">
+    Only guests can switch sharing on, each for themselves, on their <strong>My details</strong> page. If someone asks you to hide
+    something, you can switch it off here. Everything they shared is deleted on {formatDate(DIRECTORY_CLOSES)}.
+  </p>
+
+  <Headcount
+    class="mt-block border-y border-thread py-5"
+    items={[
+      { label: 'Sharing', value: sharing.length, note: 'On the Participants page' },
+      { label: 'Chose not to share', value: declined.length, note: 'Saved with their name off' },
+      { label: 'Not looked yet', value: notLooked.length, note: 'Never saved their choices' },
+    ]}
+  />
+
+  <section class="mt-section" aria-labelledby="sharing">
+    <h2 id="sharing" class="text-heading">Sharing</h2>
+    {sharing.length === 0 ? <p class="mt-2">Nobody yet.</p> : (
+      <ul class="ruled mt-3 max-w-measure border-y border-thread">
+        {sharing.map((p) => {
+          const theirs = shares.get(p.id)!;
+          return (
+            <li id={`p-${p.id}`} class="py-4">
+              <p>
+                <span class="font-bold">{p.full_name}</span> <span class="text-ink-soft">({household.get(p.household_id)})</span>
+                {notComing.has(p.id) && <span class="block text-ink-soft">Replied “can’t come”, so not shown to guests for now.</span>}
+              </p>
+              <ul class="mt-2 space-y-1">
+                {SHARING_FIELDS.filter((f) => theirs.has(f)).map((field) => (
+                  <li>
+                    <details class="disclosure">
+                      <summary class="justify-between">
+                        <span>
+                          {SHORT[field]} <span class="text-ink-soft">since {day(theirs.get(field)!)}</span>
+                        </span>
+                        <span class="disclosure-label shrink-0">Switch off</span>
+                      </summary>
+                      <form method="POST" action={`${actions.admin.withdrawSharing}#p-${p.id}`} class="disclosure-panel">
+                        <input type="hidden" name="person_id" value={p.id} />
+                        <input type="hidden" name="field" value={field} />
+                        <input type="hidden" name="full_name" value={p.full_name} />
+                        <p>
+                          {field === 'listed'
+                            ? `${p.full_name} leaves the Participants page completely.`
+                            : `Other guests stop seeing this for ${p.full_name}.`}{' '}
+                          Only {p.full_name} can switch it on again.
+                        </p>
+                        <label class="flex min-h-tap items-center gap-3">
+                          <input type="checkbox" name="confirm" value="true" required class="tick" />
+                          Yes, {p.full_name} asked for this
+                        </label>
+                        <button type="submit" class="button-quiet" data-busy="Switching off…">Switch it off</button>
+                      </form>
+                    </details>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          );
+        })}
+      </ul>
+    )}
+  </section>
+
+  <section class="mt-section" aria-labelledby="declined">
+    <h2 id="declined" class="text-heading">Chose not to share</h2>
+    {declined.length === 0 ? <p class="mt-2">Nobody.</p> : (
+      <ul class="ruled mt-3 max-w-measure border-y border-thread">
+        {declined.map((p) => (
+          <li class="py-2">
+            <span class="font-bold">{p.full_name}</span> <span class="text-ink-soft">({household.get(p.household_id)}), decided on {day(saved.get(p.id)!)}</span>
+          </li>
+        ))}
+      </ul>
+    )}
+  </section>
+
+  <section class="mt-section" aria-labelledby="not-looked">
+    <h2 id="not-looked" class="text-heading">Not looked yet</h2>
+    <p class="mt-1 text-ink-soft">They can choose on their My details page (link at the bottom of every page).</p>
+    {notLooked.length === 0 ? <p class="mt-2">Everyone has chosen.</p> : (
+      <ul class="ruled mt-3 max-w-measure border-y border-thread">
+        {notLooked.map((p) => (
+          <li class="py-2">
+            <span class="font-bold">{p.full_name}</span> <span class="text-ink-soft">({household.get(p.household_id)})</span>
+          </li>
+        ))}
+      </ul>
+    )}
+  </section>
+</Layout>

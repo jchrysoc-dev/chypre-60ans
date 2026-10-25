@@ -27,7 +27,7 @@ Public is needed because Vercel's free (Hobby) plan blocks deploying a private r
 
 ### 3. Vercel
 1. Import the GitHub repo. Production branch `main`. Build command `npm run build`.
-2. Add the three variables from `.env.example` (Production).
+2. Add the three Supabase variables from `.env.example` (Production), and `WHATSAPP_GROUP_URL` once the group exists.
 3. Settings → Notifications: turn on failed-deployment emails.
 4. **Test push as Mum before relying on this** (see "Risks"): have her make a harmless change from her own GitHub account and confirm it deploys. Then ask the agent to undo it.
 

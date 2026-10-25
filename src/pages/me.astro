@@ -1,10 +1,167 @@
 ---
+/**
+ * The visitor's own sharing choices for the Participants page. Only they can switch sharing on;
+ * the database enforces it (public.save_my_sharing runs as the visitor).
+ */
+import { actions } from 'astro:actions';
+import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import PageIntro from '../components/PageIntro.astro';
 import Note from '../components/Note.astro';
+import type { SharingField } from '../lib/database.types';
+import { byName, cyprusDay, formatDate } from '../lib/format';
+import { DIRECTORY_CLOSES, SWITCHES, displayPhone } from '../lib/sharing';
+
+const db = Astro.locals.supabase;
+const me = Astro.locals.person!;
+
+const results = [actions.sharing.save, actions.sharing.clear].map((action) => Astro.getActionResult(action));
+const done = results.find((r) => r?.data)?.data?.message;
+const failed = results.find((r) => r?.error)?.error?.message;
+
+const [{ data: self }, { data: profile }, { data: consents }, { data: rsvp }, { data: household }] = await Promise.all([
+  db.from('people').select('email').eq('id', me.id).single(),
+  db.from('profiles').select('*').eq('person_id', me.id).maybeSingle(),
+  db.from('sharing_consents').select('field, granted_at').eq('person_id', me.id),
+  db.from('rsvps').select('arrival_date, departure_date').eq('person_id', me.id).maybeSingle(),
+  db.from('people').select('full_name').eq('household_id', me.household_id).eq('is_child', true),
+]);
+const places = (await getCollection('accommodation')).sort((a, b) => byName(a.data.name, b.data.name));
+const since = new Map((consents ?? []).map((c) => [c.field, c.granted_at]));
+const children = (household ?? []).map((c) => c.full_name.trim().split(' ')[0]).sort(byName);
+const shown = SWITCHES.filter((s) => s.field !== 'children' || children.length > 0);
+
+const datesKnown = rsvp?.arrival_date || rsvp?.departure_date;
+const dates = datesKnown
+  ? [rsvp?.arrival_date && `Arriving ${formatDate(rsvp.arrival_date)}`, rsvp?.departure_date && `leaving ${formatDate(rsvp.departure_date)}`]
+      .filter(Boolean)
+      .join(', ')
+  : undefined;
+
+/** What the switch shares, shown under it so nobody has to guess. */
+const value: Partial<Record<SharingField, string | undefined>> = {
+  email: self?.email ?? undefined,
+  dates,
+  children: children.join(', '),
+};
+const label = 'block font-bold';
 ---
 
 <Layout title="My details">
-  <PageIntro title="My details" lead="Your household, what you share, and your privacy choices." />
-  {/* Arrives in M4. */}<Note>You will be able to edit your household, choose what to share, and delete your information.</Note>
+  <PageIntro title="My details" lead="Choose what the other guests can see about you on the Participants page." />
+
+  <div aria-live="polite">
+    {done && <Note tone="success">{done}{' '}<a href="/participants">See the Participants page</a></Note>}
+    {failed && <Note tone="error" title="Not saved">{failed}</Note>}
+  </div>
+
+  <section aria-labelledby="who-sees" class="mt-block max-w-measure border-y border-thread py-6">
+    <h2 id="who-sees" class="text-heading">Who sees what</h2>
+    <ul class="mt-3 list-disc space-y-2 pl-6">
+      <li><strong>Nothing is shared until you switch it on</strong>, not even your name. Each switch is separate.</li>
+      <li>What you switch on is seen <strong>only by the guests invited to the party</strong>, once they have logged in. Never by search engines or anyone else.</li>
+      <li>You choose for yourself only. Nobody else in your household, and not the organisers, can switch sharing on for you.</li>
+      <li>Switching something off hides it <strong>straight away</strong>. You can change your mind at any time.</li>
+      <li>The organisers see these details to plan the party, even the ones you don't share.</li>
+      <li>Everything on this page is deleted on <strong>{formatDate(DIRECTORY_CLOSES)}</strong>. More in the <a href="/privacy">privacy notice</a>.</li>
+    </ul>
+  </section>
+
+  <form method="POST" action={actions.sharing.save} class="group mt-block max-w-measure space-y-6">
+    {
+      shown.map(({ field, label: text, hint }) => (
+        <div
+          class:list={[
+            'border-t border-thread pt-5',
+            field !== 'listed' && 'group-has-[#share-listed:not(:checked)]:hidden',
+          ]}
+        >
+          <label class="flex min-h-tap items-start gap-3">
+            <input type="checkbox" id={`share-${field}`} name={`share-${field}`} checked={since.has(field)} class="tick mt-1" />
+            <span>
+              <span class="font-bold">{text}</span>
+              {hint && <span class="block text-ink-soft">{hint}</span>}
+              {value[field] && <span class="block">{value[field]}</span>}
+              {field === 'dates' && !datesKnown && (
+                <span class="block">You haven't given dates yet. <a href="/rsvp">Add them on the RSVP page</a>.</span>
+              )}
+              {since.get(field) && <span class="block text-ink-soft">Shared since {formatDate(cyprusDay(since.get(field)!))}.</span>}
+            </span>
+          </label>
+
+          {field === 'phone' && (
+            <div class="mt-3 pl-9">
+              <label for="phone" class={label}>Phone number, with the country code</label>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                autocomplete="tel"
+                maxlength="30"
+                value={profile?.phone ? displayPhone(profile.phone) : ''}
+                placeholder="e.g. +357 99 123 456"
+                class="field"
+              />
+              <label class="mt-2 flex min-h-tap items-center gap-3">
+                <input type="checkbox" name="phone_whatsapp" checked={profile?.phone_whatsapp} class="tick" />
+                This number is on WhatsApp
+              </label>
+            </div>
+          )}
+          {field === 'city' && (
+            <div class="mt-3 pl-9">
+              <label for="city" class={label}>City or country</label>
+              <input id="city" name="city" maxlength="100" value={profile?.city ?? ''} placeholder="e.g. Lyon, France" class="field" />
+            </div>
+          )}
+          {field === 'staying_at' && (
+            <div class="mt-3 space-y-3 pl-9">
+              <div>
+                <label for="staying_at" class={label}>Where I am staying</label>
+                <select id="staying_at" name="staying_at" class="field">
+                  <option value="" selected={!profile?.staying_at}>Not decided yet</option>
+                  {places.map((p) => (
+                    <option value={p.id} selected={profile?.staying_at === p.id}>
+                      {p.data.name}
+                    </option>
+                  ))}
+                  <option value="other" selected={profile?.staying_at === 'other'}>Somewhere else</option>
+                </select>
+              </div>
+              <div>
+                <label for="staying_other" class={label}>If somewhere else, where?</label>
+                <input
+                  id="staying_other"
+                  name="staying_other"
+                  maxlength="100"
+                  value={profile?.staying_other ?? ''}
+                  placeholder="e.g. with family in Limassol"
+                  class="field"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      ))
+    }
+    <p class="border-t border-thread pt-5">
+      <button type="submit" class="button">Save my choices</button>
+    </p>
+  </form>
+
+  <section aria-labelledby="delete" class="mt-section max-w-measure">
+    <h2 id="delete" class="text-heading">Delete what I shared</h2>
+    <details class="disclosure mt-2">
+      <summary><span class="disclosure-label">Delete everything on this page</span></summary>
+      <div class="disclosure-panel">
+        <p>Your phone number, city and where you stay are deleted, every switch goes off, and you leave the Participants page. Your RSVP and activities stay as they are.</p>
+        <form method="POST" action={actions.sharing.clear}>
+          <button type="submit" class="button-quiet">Yes, delete it all</button>
+        </form>
+      </div>
+    </details>
+    <p class="mt-4 text-ink-soft">
+      To change who is in your household, or to remove your invitation completely, please ask the organisers.
+    </p>
+  </section>
 </Layout>

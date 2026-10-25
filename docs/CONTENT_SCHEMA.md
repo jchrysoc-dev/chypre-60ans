@@ -69,6 +69,8 @@ Files: `welcome.md`, `thank-you.md`, `privacy.md`.
 
 ## `content/accommodation/<id>.md`
 
+The file name (`<id>`) is what guests choose as "Where I am staying" on My details (stored in the database as `profiles.staying_at`). **Don't rename an accommodation file**: guests who chose it would lose their choice. If a place is no longer suggested, it can be removed; guests who chose it simply show nothing until they choose again.
+
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `name` | text | yes | |

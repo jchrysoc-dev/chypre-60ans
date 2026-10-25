@@ -21,6 +21,8 @@ export default defineConfig({
       SUPABASE_URL: envField.string({ context: 'server', access: 'secret', url: true }),
       SUPABASE_PUBLISHABLE_KEY: envField.string({ context: 'server', access: 'secret' }),
       SUPABASE_SECRET_KEY: envField.string({ context: 'server', access: 'secret' }),
+      // WhatsApp group invite link shown on /participants (logged-in guests only). Optional.
+      WHATSAPP_GROUP_URL: envField.string({ context: 'server', access: 'secret', optional: true }),
       // Set by Vercel. Preview deploys don't copy their activities into the database.
       VERCEL_ENV: envField.enum({ context: 'server', access: 'public', optional: true, values: ['production', 'preview', 'development'] }),
     },

@@ -1,6 +1,8 @@
 import { ActionError, defineAction, type ActionAPIContext } from 'astro:actions';
 import { z } from 'astro/zod';
 import { ensureActivitiesSynced, explain } from '../lib/activities';
+import { SHARING_FIELDS } from '../lib/database.types';
+import { FIELD_LABEL } from '../lib/sharing';
 import * as guestList from '../lib/guest-list';
 import { createSecretClient } from '../lib/supabase';
 
@@ -148,6 +150,23 @@ export const admin = {
       const { error } = await db.from('activity_signups').delete().eq('activity_id', activity_id).eq('person_id', person_id);
       if (error) throw new ActionError({ code: 'BAD_REQUEST', message: explain(error).message });
       return { message: `${full_name} was taken off this activity. The waiting list moved up if a place was free.` };
+    },
+  }),
+
+  /** Switches off one thing a guest shares, when they ask. Organisers can never switch sharing on. */
+  withdrawSharing: defineAction({
+    accept: 'form',
+    input: z.object({ person_id: id, field: z.enum(SHARING_FIELDS), full_name: z.string(), confirm: ticked }),
+    handler: async ({ person_id, field, full_name }, context) => {
+      const { db } = organiser(context);
+      const { error } = await db.from('sharing_consents').delete().eq('person_id', person_id).eq('field', field);
+      if (error) throw new ActionError({ code: 'BAD_REQUEST', message: 'It could not be switched off. Please try again.' });
+      return {
+        message:
+          field === 'listed'
+            ? `${full_name} is no longer on the Participants page.`
+            : `“${FIELD_LABEL[field]}” is switched off for ${full_name}. Other guests no longer see it.`,
+      };
     },
   }),
 };

@@ -1,10 +1,115 @@
 ---
+/**
+ * The guests who chose to be listed, one entry per household. Everything comes from
+ * public.participants(), which returns only what each person switched on: the page
+ * never receives anything else.
+ */
+import { getCollection } from 'astro:content';
+import { WHATSAPP_GROUP_URL } from 'astro:env/server';
 import Layout from '../layouts/Layout.astro';
 import PageIntro from '../components/PageIntro.astro';
 import Note from '../components/Note.astro';
+import { byName, cyprusDay, formatDate } from '../lib/format';
+import { displayPhone, groupByHousehold, whatsappGroup, whatsappLink } from '../lib/sharing';
+
+const { data: entries, error } = await Astro.locals.supabase.rpc('participants');
+if (error) console.error(`[participants] directory failed: code=${error.code ?? '-'}`);
+const households = groupByHousehold(entries ?? [], byName);
+
+const group = whatsappGroup(WHATSAPP_GROUP_URL);
+const activities = new Map((await getCollection('activities')).map((a) => [a.id, a.data]));
+const places = new Map((await getCollection('accommodation')).map((p) => [p.id, p.data.name]));
+const { data: mine } = await Astro.locals.supabase.from('sharing_consents')
+  .select('field')
+  .eq('person_id', Astro.locals.person!.id)
+  .eq('field', 'listed');
+const listed = (mine ?? []).length > 0;
+
+const staying = (id: string | null, other: string | null) => (id === 'other' ? other : id ? places.get(id) : undefined);
+const activityNames = (ids: string[]) =>
+  ids
+    .map((id) => activities.get(id))
+    .filter((a) => a !== undefined)
+    .map((a) => `${a.title} (${formatDate(cyprusDay(a.start))})`);
 ---
 
 <Layout title="Participants">
   <PageIntro title="Participants" lead="Who is coming, and how to get in touch with each other." />
-  {/* Arrives in M4. */}<Note>Guests who choose to share their details will be listed here, with a link to the WhatsApp group. Nothing is shown unless you switch it on.</Note>
+
+  {
+    group && (
+      <section aria-labelledby="whatsapp" class="max-w-measure border-y border-thread py-6">
+        <h2 id="whatsapp" class="text-heading">The WhatsApp group</h2>
+        <p class="mt-2">For news, lifts and last-minute questions. Everyone in the group sees your name and phone number.</p>
+        <a href={group} class="button mt-4" rel="noopener" target="_blank">
+          Join the WhatsApp group<span class="sr-only"> (opens WhatsApp)</span>
+        </a>
+      </section>
+    )
+  }
+
+  <p class="mt-block max-w-measure">
+    {listed ? 'You are on this list.' : 'You are not on this list.'}{' '}
+    <a href="/me">{listed ? 'Change what you share' : 'Choose what to share'}</a>. People only appear here, with only the details they
+    switched on, if they chose to.
+  </p>
+
+  {error && <Note tone="error" title="The list could not be loaded" class="mt-block">Please try again in a moment.</Note>}
+  {
+    !error && households.length === 0 && (
+      <Note class="mt-block">Nobody has chosen to be listed yet.</Note>
+    )
+  }
+
+  {households.length > 0 && (
+  <ul class="ruled mt-block border-y border-thread">
+    {
+      households.map((h) => (
+        <li class="py-7">
+          {h.adults.map((p, i) => {
+            const stay = staying(p.staying_at, p.staying_other);
+            const dates = [p.arrival_date && `Arrives ${formatDate(p.arrival_date)}`, p.departure_date && `leaves ${formatDate(p.departure_date)}`]
+              .filter(Boolean)
+              .join(', ');
+            const going = p.activity_ids ? activityNames(p.activity_ids) : [];
+            return (
+              <div class:list={[i > 0 && 'mt-5']}>
+                <h2 class="text-subheading font-bold">{p.name}</h2>
+                <dl class="mt-1 grid gap-x-4 gap-y-1 sm:grid-cols-[10rem_1fr]">
+                  {p.city && (<><dt class="text-ink-soft">Lives in</dt><dd>{p.city}</dd></>)}
+                  {stay && (<><dt class="text-ink-soft">Staying at</dt><dd>{stay}</dd></>)}
+                  {dates && (<><dt class="text-ink-soft">In Cyprus</dt><dd>{dates}</dd></>)}
+                  {p.email && (<><dt class="text-ink-soft">Email</dt><dd class="break-all"><a href={`mailto:${p.email}`}>{p.email}</a></dd></>)}
+                  {p.phone && (
+                    <>
+                      <dt class="text-ink-soft">Phone</dt>
+                      <dd>
+                        <a href={`tel:${p.phone}`}>{displayPhone(p.phone)}</a>
+                        {p.phone_whatsapp && (
+                          <>
+                            {' · '}
+                            <a href={whatsappLink(p.phone)} rel="noopener" target="_blank">
+                              Message on WhatsApp<span class="sr-only"> (opens WhatsApp)</span>
+                            </a>
+                          </>
+                        )}
+                      </dd>
+                    </>
+                  )}
+                  {p.activity_ids && (
+                    <>
+                      <dt class="text-ink-soft">Activities</dt>
+                      <dd>{going.length ? going.join('; ') : 'None yet'}</dd>
+                    </>
+                  )}
+                </dl>
+              </div>
+            );
+          })}
+          {h.children.length > 0 && <p class="mt-4"><span class="text-ink-soft">With</span> {h.children.join(', ')}</p>}
+        </li>
+      ))
+    }
+  </ul>
+  )}
 </Layout>
