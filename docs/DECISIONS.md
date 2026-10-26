@@ -24,6 +24,7 @@ Format: date · question → answer · why. "Default" means Claude proposed it a
 | 2026-10-23 | Who creates accounts | **Mum pre-loads an invite list** in `/admin`. Only listed emails can log in. | Private event, no approval queue. |
 | 2026-10-23 | Household vs person | **Household-based:** each person logs in with their own email, but belongs to a household. Any adult member can RSVP and sign up the others (including members without email). | Couples and families answer once. |
 | 2026-10-23 | Admins | **Mum + Jacques, fixed.** Admin role is granted by a documented command or seed, not from the UI. | Small blast radius. |
+| 2026-10-26 | Two organisers named "Jacques" | **Intentional**, not a duplicate to remove. Both appear on the organiser pages (e.g. "Not looked yet" on `/admin/participants`). | Confirmed by Jacques. |
 
 ## Editing (Mum)
 
