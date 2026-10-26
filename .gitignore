@@ -13,3 +13,5 @@ content/photos/originals/*
 
 # Mum's personal safety settings (copied from docs/mum-claude-settings.json), kept on her computer only.
 .claude/settings.local.json
+.vercel
+.env*
